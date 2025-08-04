@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Configuración de Firestore para ETV Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 30px; color: #222; }
+    h1, h2, h3 { color: #0d47a1; }
+    pre { background: #f5f5f5; padding: 12px; border-radius: 6px; overflow-x: auto; }
+    code { color: #1a237e; }
+    section { margin-bottom: 2em; }
+    .creditos { color: #e91e63; font-weight: bold; margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <h1>Configuración de Firebase Firestore</h1>
+
+  <section>
+    <h2>1. Crea tu proyecto en Firebase</h2>
+    <ol>
+      <li>Ve a <a href="https://console.firebase.google.com/" target="_blank">Firebase Console</a> y crea un nuevo proyecto.</li>
+      <li>Agrega una app web desde el panel de inicio y copia tu configuración (<b>apiKey</b>, <b>authDomain</b>, <b>projectId</b>, etc).</li>
+      <li>Activa Firestore Database desde el menú "Cloud Firestore".</li>
+    </ol>
+    <strong>Ejemplo de configuración en tu código:</strong>
+    <pre><code>const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_AUTH_DOMAIN",
+  projectId: "TU_PROJECT_ID",
+  // etc.
+};</code></pre>
+  </section>
+
+  <section>
+    <h2>2. Estructura de colecciones y documentos</h2>
+    <h3>programacion (colección)</h3>
+    <ul>
+      <li><strong>title</strong> (string): Título del programa</li>
+      <li><strong>day</strong> (string): Día del programa (ej: "Lunes")</li>
+      <li><strong>time</strong> (string): Hora (ej: "18:00")</li>
+      <li><strong>description</strong> (string): Descripción</li>
+      <li><strong>image</strong> (string): URL de la imagen</li>
+    </ul>
+    <pre><code>{
+  "title": "Noticiero Central",
+  "day": "Lunes",
+  "time": "20:00",
+  "description": "Noticias nacionales e internacionales.",
+  "image": "https://tusitio.com/imagenes/noticiero.jpg"
+}</code></pre>
+
+    <h3>top10 (colección) → config (documento)</h3>
+    <ul>
+      <li><strong>image</strong> (string): URL de la imagen</li>
+      <li><strong>playlistId</strong> (string): ID de la playlist de YouTube</li>
+    </ul>
+    <pre><code>{
+  "image": "https://tusitio.com/imagenes/top10.jpg",
+  "playlistId": "PLxxxxxxxxxxxxxxx"
+}</code></pre>
+
+    <h3>mensajes (colección) → liveMessage (documento)</h3>
+    <ul>
+      <li><strong>text</strong> (string): Mensaje en vivo</li>
+    </ul>
+    <pre><code>{
+  "text": "¡Bienvenidos a nuestra programación en vivo!"
+}</code></pre>
+
+    <h3>encuestas (colección) → currentPoll (documento)</h3>
+    <ul>
+      <li><strong>question</strong> (string): Pregunta de la encuesta</li>
+      <li><strong>options</strong> (array de objetos): Opciones de respuesta, cada una con campo <code>text</code> (string)</li>
+    </ul>
+    <pre><code>{
+  "question": "¿Cuál es tu sección favorita?",
+  "options": [
+    { "text": "Noticias" },
+    { "text": "Deportes" },
+    { "text": "Cultura" }
+  ]
+}</code></pre>
+  </section>
+
+  <section>
+    <h2>3. Seguridad: Permisos mínimos de Firestore (lectura pública)</h2>
+    <p>
+      Para que la web pueda leer los datos de Firestore sin autenticación, configura las reglas de la base de datos así:<br>
+      <strong>¡Atención! Esto solo permite lectura pública. Si necesitas seguridad extra, consulta la <a href="https://firebase.google.com/docs/firestore/security/get-started?hl=es" target="_blank">documentación oficial</a>.</strong>
+    </p>
+    <pre><code>service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read: if true;
+    }
+  }
+}</code></pre>
+  </section>
+
+  <section class="creditos">
+    Derechos reservados ekusmedios and ekustv based AI code with love
+  </section>
+</body>
+</html>

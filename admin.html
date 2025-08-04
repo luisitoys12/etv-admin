@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración de ETV Studio</title>
+    <!-- Carga de Tailwind CSS para un estilo moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Carga de la biblioteca Lucide Icons para los íconos -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilos para modales de alerta y confirmación */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 425px;
+            position: relative;
+        }
+        .modal.open {
+            display: flex;
+        }
+        .message-box {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+        .message-box-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .message-box.open {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 text-gray-900 p-4">
+    <div id="loading-indicator" class="fixed inset-0 bg-gray-100 flex items-center justify-center z-50">
+        <div class="text-center">
+            <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <p class="mt-4 text-lg font-medium">Cargando...</p>
+        </div>
+    </div>
+    
+    <div class="container mx-auto hidden" id="app-container">
+        <header class="text-center py-8">
+            <h1 class="text-4xl font-bold">Panel de Administración de ETV Studio</h1>
+            <p class="mt-2 text-lg text-gray-600">
+                Gestiona la programación, los mensajes en vivo, las encuestas y la lista de top 10.
+            </p>
+            <div class="mt-4 p-2 bg-indigo-100 text-indigo-800 rounded-md shadow-sm text-sm">
+                <span class="font-semibold">ID de Usuario:</span> <span id="user-id"></span>
+                <p class="mt-1 text-xs">Estás autenticado de forma anónima. Este ID se usa para permisos de Firestore.</p>
+            </div>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+            <!-- Sección de Programación Semanal -->
+            <div class="card col-span-1 lg:col-span-2 bg-white p-6 rounded-xl shadow-lg">
+                <div class="card-header border-b pb-4 mb-4">
+                    <h2 class="text-2xl font-bold">Programación Semanal</h2>
+                    <p class="text-gray-500">
+                        Edita el horario de cada día. La ID del documento debe ser el nombre del día.
+                    </p>
+                </div>
+                <div class="card-content">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b">
+                                <th class="py-2">Día</th>
+                                <th class="py-2">Título</th>
+                                <th class="py-2">Horario</th>
+                                <th class="py-2">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="programming-table-body">
+                            <!-- Los datos de programación se insertarán aquí -->
+                        </tbody>
+                    </table>
+                    <button id="add-day-btn" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus h-4 w-4 mr-2"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                        Agregar Día
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sección de Configuración del Top 10 -->
+            <div class="card bg-white p-6 rounded-xl shadow-lg">
+                <div class="card-header border-b pb-4 mb-4">
+                    <h2 class="text-2xl font-bold">Top 10 Configuración</h2>
+                    <p class="text-gray-500">
+                        Configura la imagen y el ID de la playlist.
+                    </p>
+                </div>
+                <div class="card-content">
+                    <form id="top10-form" class="grid gap-4">
+                        <div>
+                            <label for="top10-image" class="block text-sm font-medium text-gray-700">URL Imagen:</label>
+                            <input type="text" id="top10-image" name="image" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                        </div>
+                        <div>
+                            <label for="top10-playlistId" class="block text-sm font-medium text-gray-700">ID de Playlist:</label>
+                            <input type="text" id="top10-playlistId" name="playlistId" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                        </div>
+                        <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+                            Actualizar Top 10
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sección de Mensaje en Vivo -->
+            <div class="card bg-white p-6 rounded-xl shadow-lg">
+                <div class="card-header border-b pb-4 mb-4">
+                    <h2 class="text-2xl font-bold">Mensaje en Vivo</h2>
+                    <p class="text-gray-500">
+                        Actualiza el mensaje en la parte superior de la página.
+                    </p>
+                </div>
+                <div class="card-content">
+                    <form id="live-message-form" class="grid gap-4">
+                        <textarea id="live-message-text" class="w-full min-h-[100px] rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Escribe el mensaje en vivo aquí..." required></textarea>
+                        <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+                            Actualizar Mensaje
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sección de Encuesta en Vivo -->
+            <div class="card bg-white p-6 rounded-xl shadow-lg">
+                <div class="card-header border-b pb-4 mb-4">
+                    <h2 class="text-2xl font-bold flex items-center justify-between">
+                        <span>Encuesta en Vivo</span>
+                        <button type="button" id="generate-poll-btn" class="text-indigo-600 hover:text-indigo-700 p-2 rounded-full hover:bg-gray-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-2 h-5 w-5"><path d="M21 7.766a2 2 0 0 0-2.828-2.828l-8.694 8.693L7.766 12.18a2 2 0 0 0-2.828 2.828l1.415 1.414L2.05 18.064a2 2 0 0 0 .707 3.535l1.414-.707L16 12.18a2 2 0 0 0 2.828-2.828l-1.415-1.414z"/><path d="M16 12.18l-8.694 8.693"/><path d="M7.766 12.18L2.05 18.064"/></svg>
+                        </button>
+                    </h2>
+                    <p class="text-gray-500">
+                        Actualiza la pregunta y las opciones de la encuesta.
+                    </p>
+                </div>
+                <div class="card-content">
+                    <form id="poll-form" class="grid gap-4">
+                        <div>
+                            <label for="poll-question" class="block text-sm font-medium text-gray-700">Pregunta de la encuesta:</label>
+                            <input type="text" id="poll-question" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Escribe la pregunta aquí..." required>
+                        </div>
+                        <div class="grid gap-2" id="poll-options-container">
+                            <label class="block text-sm font-medium text-gray-700">Opciones:</label>
+                            <input type="text" class="option-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Opción 1" required>
+                            <input type="text" class="option-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Opción 2" required>
+                            <input type="text" class="option-input mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" placeholder="Opción 3" required>
+                        </div>
+                        <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
+                            Actualizar Encuesta
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Modal para agregar/editar programación -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center pb-4 border-b">
+                <h3 id="modal-title" class="text-xl font-bold">Agregar Día</h3>
+                <button id="close-modal-btn" class="text-gray-400 hover:text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x h-6 w-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </div>
+            <form id="edit-form" class="grid gap-4 py-4">
+                <div>
+                    <label for="day" class="block text-sm font-medium text-gray-700">Día:</label>
+                    <input type="text" id="day" name="day" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                </div>
+                <div>
+                    <label for="title" class="block text-sm font-medium text-gray-700">Título:</label>
+                    <input type="text" id="title" name="title" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                </div>
+                <div>
+                    <label for="time" class="block text-sm font-medium text-gray-700">Horario:</label>
+                    <input type="text" id="time" name="time" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                </div>
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700">Descripción:</label>
+                    <div class="flex items-center gap-2">
+                        <textarea id="description" name="description" class="flex-grow w-full min-h-[100px] rounded-md border-gray-300 shadow-sm p-2 border" required></textarea>
+                        <button type="button" id="generate-description-btn" class="p-2 rounded-full hover:bg-gray-100 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-2 h-5 w-5 text-indigo-600"><path d="M21 7.766a2 2 0 0 0-2.828-2.828l-8.694 8.693L7.766 12.18a2 2 0 0 0-2.828 2.828l1.415 1.414L2.05 18.064a2 2 0 0 0 .707 3.535l1.414-.707L16 12.18a2 2 0 0 0 2.828-2.828l-1.415-1.414z"/><path d="M16 12.18l-8.694 8.693"/><path d="M7.766 12.18L2.05 18.064"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div>
+                    <label for="image" class="block text-sm font-medium text-gray-700">URL Imagen:</label>
+                    <input type="text" id="image" name="image" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                </div>
+                <div class="mt-4 flex justify-end gap-2">
+                    <button type="button" id="cancel-edit-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">Cancelar</button>
+                    <button type="submit" id="save-edit-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Cuadro de mensajes personalizado -->
+    <div id="custom-message-box" class="message-box">
+        <div class="message-box-content">
+            <h4 id="message-box-title" class="text-lg font-bold mb-2"></h4>
+            <p id="message-box-text" class="text-gray-700 mb-4"></p>
+            <div id="message-box-buttons" class="flex justify-center gap-4">
+                <!-- Los botones se insertarán aquí -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Firebase y lógica de la aplicación -->
+    <script type="module">
+        // Importar las bibliotecas de Firebase desde CDN
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Variables globales proporcionadas por el entorno de Canvas
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+        let userId = null;
+        let isAuthReady = false;
+
+        // Elementos del DOM
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const appContainer = document.getElementById('app-container');
+        const programmingTableBody = document.getElementById('programming-table-body');
+        const top10Form = document.getElementById('top10-form');
+        const liveMessageForm = document.getElementById('live-message-form');
+        const pollForm = document.getElementById('poll-form');
+        const generatePollBtn = document.getElementById('generate-poll-btn');
+        const editModal = document.getElementById('edit-modal');
+        const modalTitle = document.getElementById('modal-title');
+        const editForm = document.getElementById('edit-form');
+        const generateDescriptionBtn = document.getElementById('generate-description-btn');
+        const addDayBtn = document.getElementById('add-day-btn');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const cancelEditBtn = document.getElementById('cancel-edit-btn');
+        const userIdSpan = document.getElementById('user-id');
+        const customMessageBox = document.getElementById('custom-message-box');
+        const messageBoxTitle = document.getElementById('message-box-title');
+        const messageBoxText = document.getElementById('message-box-text');
+        const messageBoxButtons = document.getElementById('message-box-buttons');
+        
+        let currentEditingDocId = null;
+
+        // Función para mostrar un mensaje personalizado (reemplaza alert/confirm)
+        function showCustomMessage(title, text, type = 'alert') {
+            return new Promise((resolve) => {
+                messageBoxTitle.textContent = title;
+                messageBoxText.textContent = text;
+                messageBoxButtons.innerHTML = '';
+                
+                const okButton = document.createElement('button');
+                okButton.textContent = 'OK';
+                okButton.className = 'px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors';
+                okButton.onclick = () => {
+                    customMessageBox.classList.remove('open');
+                    resolve(true);
+                };
+                messageBoxButtons.appendChild(okButton);
+
+                if (type === 'confirm') {
+                    const cancelButton = document.createElement('button');
+                    cancelButton.textContent = 'Cancelar';
+                    cancelButton.className = 'px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors';
+                    cancelButton.onclick = () => {
+                        customMessageBox.classList.remove('open');
+                        resolve(false);
+                    };
+                    messageBoxButtons.appendChild(cancelButton);
+                }
+
+                customMessageBox.classList.add('open');
+            });
+        }
+
+        // Función para renderizar la tabla de programación
+        const renderProgrammingTable = (data) => {
+            programmingTableBody.innerHTML = '';
+            data.forEach(item => {
+                const row = document.createElement('tr');
+                row.className = 'border-b last:border-b-0';
+                row.innerHTML = `
+                    <td class="py-2 font-medium">${item.day}</td>
+                    <td class="py-2">${item.title}</td>
+                    <td class="py-2">${item.time}</td>
+                    <td class="py-2 flex gap-2">
+                        <button data-id="${item.id}" class="edit-btn text-indigo-600 hover:text-indigo-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-edit h-4 w-4"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+                        </button>
+                        <button data-id="${item.id}" class="delete-btn text-red-600 hover:text-red-700">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2 h-4 w-4"><path d="M3 6h18"/><path d="M19 6v14c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V6"/><path d="M8 6V4c0-1.1.9-2 2-2h4c1.1 0 2 .9 2 2v2"/></svg>
+                        </button>
+                    </td>
+                `;
+                programmingTableBody.appendChild(row);
+            });
+
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    const itemToEdit = data.find(item => item.id === id);
+                    if (itemToEdit) {
+                        currentEditingDocId = id;
+                        modalTitle.textContent = 'Editar Programa';
+                        document.getElementById('day').value = itemToEdit.day || '';
+                        document.getElementById('title').value = itemToEdit.title || '';
+                        document.getElementById('time').value = itemToEdit.time || '';
+                        document.getElementById('description').value = itemToEdit.description || '';
+                        document.getElementById('image').value = itemToEdit.image || '';
+                        editModal.classList.add('open');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.currentTarget.dataset.id;
+                    const confirmed = await showCustomMessage('Confirmar Eliminación', '¿Estás seguro de que quieres eliminar este elemento?', 'confirm');
+                    if (confirmed) {
+                        try {
+                            await deleteDoc(doc(db, 'programacion', id));
+                            console.log('Documento eliminado con éxito!');
+                        } catch (e) {
+                            console.error('Error al eliminar documento: ', e);
+                        }
+                    }
+                });
+            });
+        };
+
+        // Escuchar el estado de autenticación para asegurar el acceso
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                console.log("Usuario autenticado:", user.uid);
+                userId = user.uid;
+                userIdSpan.textContent = userId;
+                isAuthReady = true;
+                
+                // Ocultar el indicador de carga y mostrar la aplicación
+                loadingIndicator.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+
+                // Configurar listeners de Firestore para cada sección una vez que la autenticación está lista
+                onSnapshot(collection(db, 'programacion'), (snapshot) => {
+                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderProgrammingTable(data);
+                });
+
+                onSnapshot(doc(db, 'top10', 'config'), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        document.getElementById('top10-image').value = data.image || '';
+                        document.getElementById('top10-playlistId').value = data.playlistId || '';
+                    }
+                });
+
+                onSnapshot(doc(db, 'mensajes', 'liveMessage'), (docSnap) => {
+                    if (docSnap.exists()) {
+                        document.getElementById('live-message-text').value = docSnap.data().text || '';
+                    }
+                });
+
+                onSnapshot(doc(db, 'encuestas', 'currentPoll'), (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        document.getElementById('poll-question').value = data.question || '';
+                        const optionInputs = document.querySelectorAll('#poll-options-container .option-input');
+                        data.options.forEach((opt, index) => {
+                            if (optionInputs[index]) {
+                                optionInputs[index].value = opt.text || '';
+                            }
+                        });
+                    }
+                });
+            } else {
+                // Si el usuario no está autenticado, intentar iniciar sesión
+                try {
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(auth, initialAuthToken);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+                } catch (error) {
+                    console.error("Error al iniciar sesión:", error);
+                }
+            }
+        });
+
+        // Manejadores de eventos de la UI
+        addDayBtn.addEventListener('click', () => {
+            currentEditingDocId = null;
+            modalTitle.textContent = 'Agregar Día';
+            editForm.reset();
+            editModal.classList.add('open');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            editModal.classList.remove('open');
+        });
+
+        cancelEditBtn.addEventListener('click', () => {
+            editModal.classList.remove('open');
+        });
+        
+        // Manejador del formulario de programación
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isAuthReady) {
+                showCustomMessage('Error de Autenticación', 'Por favor, espera a que el sistema se autentique antes de guardar.');
+                return;
+            }
+
+            const formData = {
+                day: document.getElementById('day').value,
+                title: document.getElementById('title').value,
+                time: document.getElementById('time').value,
+                description: document.getElementById('description').value,
+                image: document.getElementById('image').value,
+            };
+
+            try {
+                if (currentEditingDocId) {
+                    await updateDoc(doc(db, 'programacion', currentEditingDocId), formData);
+                    console.log('Documento actualizado con éxito!');
+                } else {
+                    await setDoc(doc(db, 'programacion', formData.day), formData);
+                    console.log('Documento agregado con éxito!');
+                }
+                editModal.classList.remove('open');
+            } catch (error) {
+                console.error('Error al guardar el documento: ', error);
+                showCustomMessage('Error', 'No se pudo guardar el documento. Revisa la consola para más detalles.');
+            }
+        });
+
+        // Llamada a la API de Gemini para generar una descripción
+        generateDescriptionBtn.addEventListener('click', async () => {
+            if (!isAuthReady) {
+                showCustomMessage('Error de Autenticación', 'Por favor, espera a que el sistema se autentique antes de usar esta función.');
+                return;
+            }
+
+            const title = document.getElementById('title').value;
+            const day = document.getElementById('day').value;
+            const time = document.getElementById('time').value;
+
+            if (!title || !day || !time) {
+                showCustomMessage('Error', 'Por favor, completa los campos de Título, Día y Horario primero.');
+                return;
+            }
+
+            generateDescriptionBtn.disabled = true;
+            generateDescriptionBtn.innerHTML = '...';
+
+            const userPrompt = `Genera una descripción corta (máximo 50 palabras) y atractiva para un programa de televisión llamado "${title}" que se transmite el día "${day}" a las "${time}".`;
+            try {
+                const chatHistory = [{ role: "user", parts: [{ text: userPrompt }] }];
+                const payload = { contents: chatHistory };
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (text) {
+                    document.getElementById('description').value = text;
+                }
+            } catch (error) {
+                console.error("Error al generar descripción:", error);
+                showCustomMessage('Error', 'Error al generar la descripción. Inténtalo de nuevo.');
+            } finally {
+                generateDescriptionBtn.disabled = false;
+                generateDescriptionBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-2 h-5 w-5 text-indigo-600"><path d="M21 7.766a2 2 0 0 0-2.828-2.828l-8.694 8.693L7.766 12.18a2 2 0 0 0-2.828 2.828l1.415 1.414L2.05 18.064a2 2 0 0 0 .707 3.535l1.414-.707L16 12.18a2 2 0 0 0 2.828-2.828l-1.415-1.414z"/><path d="M16 12.18l-8.694 8.693"/><path d="M7.766 12.18L2.05 18.064"/></svg>`;
+            }
+        });
+
+        // Manejador del formulario del Top 10
+        top10Form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isAuthReady) {
+                showCustomMessage('Error de Autenticación', 'Por favor, espera a que el sistema se autentique antes de guardar.');
+                return;
+            }
+
+            const formData = {
+                image: document.getElementById('top10-image').value,
+                playlistId: document.getElementById('top10-playlistId').value,
+            };
+            try {
+                await setDoc(doc(db, 'top10', 'config'), formData);
+                console.log('Top 10 actualizado con éxito!');
+            } catch (e) {
+                console.error('Error al actualizar Top 10: ', e);
+                showCustomMessage('Error', 'No se pudo actualizar el Top 10. Revisa la consola.');
+            }
+        });
+
+        // Manejador del formulario de mensaje en vivo
+        liveMessageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!isAuthReady) {
+                showCustomMessage('Error de Autenticación', 'Por favor, espera a que el sistema se autentique antes de guardar.');
+                return;
+            }
+
+            const message = document.getElementById('live-message-text').value;
+            try {
+                await setDoc(doc(db, 'mensajes', 'liveMessage'), { text: message });
+                console.log('Mensaje en vivo actualizado con éxito!');
+            } catch (e) {
+                console.error('Error al actualizar mensaje: ', e);
+                showCustomMessage('Error', 'No se pudo actualizar el mensaje en vivo. Revisa la consola.');
+            }
+        });
+
+        // Manejador del formulario de encuestas
+        pollForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!isAuthReady) {
+                showCustomMessage('Error de Autenticación', 'Por favor, espera a que el sistema se autentique antes de guardar.');
+                return;
+            }
+
+            const question = document.getElementById('poll-question').value;
+            const optionInputs = document.querySelectorAll('#poll-options-container .option-input');
+            const options = Array.from(optionInputs).map(input => ({ text: input.value, votes: 0 }));
+
+            try {
+                await setDoc(doc(db, 'encuestas', 'currentPoll'), { question, options });
+                console.log('Encuesta actualizada con éxito!');
+            } catch (e) {
+                console.error('Error al actualizar encuesta: ', e);
+                showCustomMessage('Error', 'No se pudo actualizar la encuesta. Revisa la consola.');
+            }
+        });
+
+        // Llamada a la API de Gemini para generar una encuesta estructurada
+        generatePollBtn.addEventListener('click', async () => {
+            if (!isAuthReady) {
+                showCustomMessage('Error de Autenticación', 'Por favor, espera a que el sistema se autentique antes de usar esta función.');
+                return;
+            }
+
+            generatePollBtn.disabled = true;
+            generatePollBtn.innerHTML = '...';
+
+            const userPrompt = "Genera una pregunta de encuesta interesante y tres opciones de respuesta para un estudio de televisión. El tema es libre.";
+            try {
+                const chatHistory = [{ role: "user", parts: [{ text: userPrompt }] }];
+                const payload = {
+                    contents: chatHistory,
+                    generationConfig: {
+                        responseMimeType: "application/json",
+                        responseSchema: {
+                            type: "OBJECT",
+                            properties: {
+                                "question": { "type": "STRING" },
+                                "options": {
+                                    "type": "ARRAY",
+                                    "items": { "type": "STRING" },
+                                    "maxItems": 3
+                                }
+                            }
+                        }
+                    }
+                };
+
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (text) {
+                    const parsedJson = JSON.parse(text);
+                    document.getElementById('poll-question').value = parsedJson.question;
+                    const optionInputs = document.querySelectorAll('#poll-options-container .option-input');
+                    parsedJson.options.forEach((opt, index) => {
+                        if (optionInputs[index]) {
+                            optionInputs[index].value = opt;
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error("Error al generar encuesta:", error);
+                showCustomMessage('Error', 'Error al generar la encuesta. Inténtalo de nuevo.');
+            } finally {
+                generatePollBtn.disabled = false;
+                generatePollBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-2 h-5 w-5"><path d="M21 7.766a2 2 0 0 0-2.828-2.828l-8.694 8.693L7.766 12.18a2 2 0 0 0-2.828 2.828l1.415 1.414L2.05 18.064a2 2 0 0 0 .707 3.535l1.414-.707L16 12.18a2 2 0 0 0 2.828-2.828l-1.415-1.414z"/><path d="M16 12.18l-8.694 8.693"/><path d="M7.766 12.18L2.05 18.064"/></svg>`;
+            }
+        });
+        
+        // Inicializar los iconos de Lucide
+        window.addEventListener('load', () => {
+            lucide.createIcons();
+        });
+
+    </script>
+</body>
+</html>

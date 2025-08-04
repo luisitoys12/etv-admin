@@ -1,4 +1,61 @@
+<!--
+CONFIGURACIÓN REQUERIDA PARA FIRESTORE:
+
+1. Crear un proyecto en Firebase Console (https://console.firebase.google.com)
+2. Habilitar Firestore Database
+3. Obtener la configuración de Firebase para web
+4. Reemplazar los valores en firebaseConfig más abajo con los datos de tu proyecto
+5. Configurar las reglas de Firestore para permitir lectura pública
+
+ESTRUCTURA DE DATOS ESPERADA EN FIRESTORE:
+
+Colección 'programacion':
+- Documentos con campos: day, title, time, description, image
+
+Documento 'top10/config':
+- Campos: title, image, playlistId
+
+Documento 'mensajes/liveMessage':
+- Campos: active (boolean), message (string)
+
+Documento 'encuestas/currentPoll':
+- Campos: active (boolean), question (string), options (array), results (object)
+-->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getFirestore, collection, doc, onSnapshot, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+  
+  // Firebase configuration - UPDATE THESE VALUES WITH YOUR FIREBASE PROJECT CONFIG
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY_HERE",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com", 
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:abcdefghijklmnop"
+  };
+  
+  // Initialize Firebase
+  try {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Make Firebase functions available globally
+    window.firestoreDB = db;
+    window.firestoreCollection = collection;
+    window.firestoreDoc = doc;
+    window.firestoreOnSnapshot = onSnapshot;
+    window.firestoreGetDocs = getDocs;
+    window.firebaseInitialized = true;
+    
+    console.log('Firebase initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Firebase:', error);
+    window.firebaseInitialized = false;
+  }
+</script>
 <style>
 /* Estilos Globales para un Tema de Verano */
 body {
@@ -432,6 +489,34 @@ body {
     transform: scale(1.2);
 }
 
+/* --- Estilos para la encuesta en vivo --- */
+.poll-option-button {
+    background-color: white;
+    color: #20c997;
+    border: 2px solid white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-align: center;
+}
+
+.poll-option-button:hover {
+    background-color: #20c997;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.3);
+}
+
+.poll-option-button.voted {
+    background-color: #ffc107;
+    color: #333;
+    border-color: #ffc107;
+}
+
 /* --- Ajustes Responsive --- */
 @media screen and (max-width: 768px) {
     .video-section-standalone,
@@ -581,6 +666,23 @@ body {
         <a href="https://paypal.me/ekusmedios" target="_blank" class="donation-button-standalone">Dona con PayPal</a>
     </div>
 </section>
+
+<!-- Live Message Section (will be populated from Firestore) -->
+<div id="liveMessageSection" class="important-notice-standalone" style="display: none;">
+    <p id="liveMessageContent">Cargando mensaje en vivo...</p>
+</div>
+
+<!-- Live Poll Section (will be populated from Firestore) -->
+<div id="livePollSection" class="important-notice-standalone" style="display: none; background-color: #20c997;">
+    <h3 style="color: white; font-size: 1.5em; margin-bottom: 15px;">🗳️ Encuesta en Vivo</h3>
+    <p id="pollQuestion" style="font-size: 1.2em; margin-bottom: 15px;">Cargando encuesta...</p>
+    <div id="pollOptions" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+        <!-- Poll options will be populated dynamically -->
+    </div>
+    <p id="pollResults" style="font-size: 0.9em; margin-top: 15px; opacity: 0.8;">
+        <!-- Poll results will be shown here -->
+    </p>
+</div>
 
 <div class="important-notice-standalone">
     <p>¡Cambiamos para ti! Ahora te traemos más opciones y mejores contenidos.</p>
@@ -736,141 +838,176 @@ body {
     let slideIndexStandalone = 0;
     let slideshowTimeoutStandalone;
     let currentDayFilterStandalone = 'Todos';
-    const programmingDataStandalone = [
-        {
-            day: "Lunes",
-            title: "Noticias KuSTV - Edición Matutina",
-            time: "08:00 AM - 09:00 AM",
-            description: "Un repaso exhaustivo de las noticias más relevantes del día a nivel local y nacional.",
-            image: "https://images.unsplash.com/photo-1572949646481-92978a3b50c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwxfHxuZXdzfGVufDB8fHx8MTcwMTk1NzcwMXww&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Lunes",
-            title: "Cocina con Sabor KuS",
-            time: "10:00 AM - 11:00 AM",
-            description: "Recetas fáciles y deliciosas para tu día a día, con ingredientes de temporada.",
-            image: "https://images.pexels.com/photos/3287313/pexels-photo-3287313.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Lunes",
-            title: "Deportes Extremos KuSTV",
-            time: "07:00 PM - 08:00 PM",
-            description: "Adrenalina pura con lo mejor del deporte extremo, entrevistas y análisis.",
-            image: "https://images.unsplash.com/photo-1543884890-50d4f19941a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHw1fHxlbHRyZW1lJTIwc3BvcnRzfGVufDB8fHx8MTcwMTk1NzgyOXww&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Martes",
-            title: "Misterios Urbanos",
-            time: "09:00 AM - 10:00 AM",
-            description: "Explorando leyendas y fenómenos inexplicables de nuestra ciudad y el mundo.",
-            image: "https://images.pexels.com/photos/10326442/pexels-photo-10326442.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Martes",
-            title: "Salud y Bienestar",
-            time: "01:00 PM - 02:00 PM",
-            description: "Consejos de expertos para una vida sana: nutrición, ejercicio y salud mental.",
-            image: "https://images.unsplash.com/photo-1532938911079-cdfd0ec51705?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHxoZWFsdGh8ZW5mDB8fHx8MTcwMTk1Nzg0N3ww&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Martes",
-            title: "Cine Clásico KuSTV",
-            time: "09:00 PM - 11:00 PM",
-            description: "Disfruta de las joyas del séptimo arte que marcaron una época.",
-            image: "https://images.pexels.com/photos/33129/popcorn-movie-party-cinema.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Miercoles",
-            title: "Tecnología al Día",
-            time: "11:00 AM - 12:00 PM",
-            description: "Las últimas novedades en gadgets, software y el impacto de la tecnología en nuestras vidas.",
-            image: "https://images.unsplash.com/photo-1518770660439-46740671c435?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHx0ZWNobm9sb2d5fGVufDB8fHx8MTcwMTk1Nzg2OHww&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Miercoles",
-            title: "Historia de Nuestra Región",
-            time: "03:00 PM - 04:00 PM",
-            description: "Un viaje al pasado para conocer los eventos y personajes que forjaron nuestra identidad.",
-            image: "https://images.pexels.com/photos/1572979/pexels-photo-1572979.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Miercoles",
-            title: "KuS Talentos",
-            time: "08:00 PM - 09:00 PM",
-            description: "Descubre los talentos emergentes en música, arte y comedia local.",
-            image: "https://images.unsplash.com/photo-1510511232891-4f1078e36780?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHxtdXNpY3xlbnwwfHx8fDE3MDE5NTc4ODd8MA&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Jueves",
-            title: "Finanzas Personales",
-            time: "09:00 AM - 10:00 AM",
-            description: "Consejos prácticos para manejar tu dinero, invertir y planificar tu futuro.",
-            image: "https://images.pexels.com/photos/6863264/pexels-photo-6863264.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Jueves",
-            title: "Viajes y Aventuras",
-            time: "02:00 PM - 03:00 PM",
-            description: "Explora destinos increíbles, consejos de viaje y experiencias únicas alrededor del mundo.",
-            image: "https://images.unsplash.com/photo-1501785888041-af3ba6f06fd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwxNXx8dHJhdmVsfGVufDB8fHx8MTcwMTk1NzkwMnww&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Jueves",
-            title: "Debate Político KuSTV",
-            time: "08:00 PM - 09:00 PM",
-            description: "Análisis y discusión sobre los temas políticos más relevantes con expertos y ciudadanos.",
-            image: "https://images.pexels.com/photos/6646849/pexels-photo-6646849.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Viernes",
-            title: "Cultura Pop Hoy",
-            time: "10:00 AM - 11:00 AM",
-            description: "Lo último en música, cine, series, videojuegos y tendencias que definen la cultura actual.",
-            image: "https://images.unsplash.com/photo-1585647347963-c54d3727397e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHxwG9wJTIwY3VsdHVyZXxlbnwwfHx8fDE3MDE5NTc5NDZ8MA&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Viernes",
-            title: "Especial KuSTV del Fin de Semana",
-            time: "06:00 PM - 07:00 PM",
-            description: "Un adelanto de los eventos, conciertos y actividades para disfrutar el fin de semana.",
-            image: "https://images.pexels.com/photos/347141/pexels-photo-347141.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Viernes",
-            title: "Noche de Comedia KuS",
-            time: "09:00 PM - 10:00 PM",
-            description: "Risas garantizadas con los mejores comediantes y sketches originales.",
-            image: "https://images.unsplash.com/photo-1549208077-ade58a2d3345?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwzfHxzY29tZWR5fGVufDB8fHx8MTcwMTk1ODA0NHww&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Sabado",
-            title: "Sábados de Película Infantil",
-            time: "10:00 AM - 12:00 PM",
-            description: "Las mejores películas para los más pequeños de la casa.",
-            image: "https://images.pexels.com/photos/1010515/pexels-photo-1010515.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Sabado",
-            title: "Documentales KuSTV",
-            time: "05:00 PM - 06:00 PM",
-            description: "Explora el mundo con nuestros documentales de ciencia, naturaleza e historia.",
-            image: "https://images.unsplash.com/photo-1518708688-66223405788f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwxMHx8ZG9jdW1lbnRhcnl8ZW5mDB8fHx8MTcwMTk1ODA0NHww&ixlib=rb-4.0.3&q=80&w=400"
-        },
-        {
-            day: "Domingo",
-            title: "Música sin Límites",
-            time: "02:00 PM - 04:00 PM",
-            description: "Lo mejor de todos los géneros musicales, conciertos y entrevistas.",
-            image: "https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
-        },
-        {
-            day: "Domingo",
-            title: "Series Imperdibles",
-            time: "08:00 PM - 10:00 PM",
-            description: "Maratones y estrenos de las series que están dando de qué hablar.",
-            image: "https://images.unsplash.com/photo-1574267432658-0062d64f0270?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwzfHxzZXJpZXN8ZW5mDB8fHx8MTcwMTk1ODA3NHww&ixlib=rb-4.0.3&q=80&w=400"
+    let programmingDataStandalone = []; // Will be populated from Firestore
+
+    // Firebase data loading functions
+    async function loadProgrammingData() {
+        if (!window.firebaseInitialized) {
+            console.warn('Firebase not initialized. Using fallback data.');
+            programmingDataStandalone = [];
+            renderSlidesStandalone(currentDayFilterStandalone);
+            return;
         }
-    ];
+        
+        try {
+            const programmingCollection = window.firestoreCollection(window.firestoreDB, 'programacion');
+            
+            // Set up real-time listener for programming data
+            window.firestoreOnSnapshot(programmingCollection, (snapshot) => {
+                programmingDataStandalone = [];
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    programmingDataStandalone.push({
+                        id: doc.id,
+                        day: data.day || '',
+                        title: data.title || '',
+                        time: data.time || '',
+                        description: data.description || '',
+                        image: data.image || 'https://images.unsplash.com/photo-1572949646481-92978a3b50c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwxfHxuZXdzfGVufDB8fHx8MTcwMTk1NzcwMXww&ixlib=rb-4.0.3&q=80&w=400'
+                    });
+                });
+                
+                console.log('Programación actualizada desde Firestore:', programmingDataStandalone.length, 'programas');
+                renderSlidesStandalone(currentDayFilterStandalone);
+            });
+        } catch (error) {
+            console.error('Error loading programming data:', error);
+            // Fallback to empty array if Firestore fails
+            programmingDataStandalone = [];
+            renderSlidesStandalone(currentDayFilterStandalone);
+        }
+    }
+
+    async function loadTop10Config() {
+        if (!window.firebaseInitialized) {
+            console.warn('Firebase not initialized. Using default Top 10 config.');
+            return;
+        }
+        
+        try {
+            const top10Doc = window.firestoreDoc(window.firestoreDB, 'top10', 'config');
+            window.firestoreOnSnapshot(top10Doc, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    updateTop10Display(data);
+                } else {
+                    console.log('No Top 10 config found');
+                }
+            });
+        } catch (error) {
+            console.error('Error loading Top 10 config:', error);
+        }
+    }
+
+    function updateTop10Display(config) {
+        const top10Image = document.querySelector('.top10-image-container-standalone img');
+        const top10Title = document.querySelector('.top10-section-standalone h2');
+        
+        if (config.image && top10Image) {
+            top10Image.src = config.image;
+        }
+        if (config.title && top10Title) {
+            top10Title.textContent = config.title;
+        }
+        if (config.playlistId) {
+            window.currentPlaylistId = config.playlistId;
+        }
+    }
+
+    async function loadLiveMessage() {
+        if (!window.firebaseInitialized) {
+            console.warn('Firebase not initialized. Live message disabled.');
+            return;
+        }
+        
+        try {
+            const messageDoc = window.firestoreDoc(window.firestoreDB, 'mensajes', 'liveMessage');
+            window.firestoreOnSnapshot(messageDoc, (doc) => {
+                const liveMessageSection = document.getElementById('liveMessageSection');
+                const liveMessageContent = document.getElementById('liveMessageContent');
+                
+                if (doc.exists()) {
+                    const data = doc.data();
+                    if (data.active && data.message) {
+                        liveMessageContent.textContent = data.message;
+                        liveMessageSection.style.display = 'block';
+                    } else {
+                        liveMessageSection.style.display = 'none';
+                    }
+                } else {
+                    liveMessageSection.style.display = 'none';
+                }
+            });
+        } catch (error) {
+            console.error('Error loading live message:', error);
+        }
+    }
+
+    async function loadLivePoll() {
+        if (!window.firebaseInitialized) {
+            console.warn('Firebase not initialized. Live poll disabled.');
+            return;
+        }
+        
+        try {
+            const pollDoc = window.firestoreDoc(window.firestoreDB, 'encuestas', 'currentPoll');
+            window.firestoreOnSnapshot(pollDoc, (doc) => {
+                const livePollSection = document.getElementById('livePollSection');
+                
+                if (doc.exists()) {
+                    const data = doc.data();
+                    if (data.active) {
+                        updatePollDisplay(data);
+                        livePollSection.style.display = 'block';
+                    } else {
+                        livePollSection.style.display = 'none';
+                    }
+                } else {
+                    livePollSection.style.display = 'none';
+                }
+            });
+        } catch (error) {
+            console.error('Error loading live poll:', error);
+        }
+    }
+
+    function updatePollDisplay(pollData) {
+        const pollQuestion = document.getElementById('pollQuestion');
+        const pollOptions = document.getElementById('pollOptions');
+        const pollResults = document.getElementById('pollResults');
+        
+        if (pollQuestion) {
+            pollQuestion.textContent = pollData.question || 'Pregunta de encuesta';
+        }
+        
+        if (pollOptions && pollData.options) {
+            pollOptions.innerHTML = '';
+            pollData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'poll-option-button';
+                button.textContent = option.text || `Opción ${index + 1}`;
+                button.onclick = () => votePoll(index, pollData.id);
+                pollOptions.appendChild(button);
+            });
+        }
+        
+        if (pollResults && pollData.results) {
+            const totalVotes = Object.values(pollData.results).reduce((sum, votes) => sum + votes, 0);
+            pollResults.textContent = `Total de votos: ${totalVotes}`;
+        }
+    }
+
+    function votePoll(optionIndex, pollId) {
+        // This function would normally update the vote count in Firestore
+        // For now, just show visual feedback
+        const buttons = document.querySelectorAll('.poll-option-button');
+        buttons.forEach(btn => btn.classList.remove('voted'));
+        buttons[optionIndex].classList.add('voted');
+        
+        console.log(`Voted for option ${optionIndex} in poll ${pollId}`);
+        // In a real implementation, you would update Firestore here
+    }
 
     function renderSlidesStandalone(filterDay) {
         const slidesContainer = document.querySelector('.slides-standalone');
@@ -882,7 +1019,13 @@ body {
             programmingDataStandalone.filter(program => program.day === filterDay);
 
         if (filteredData.length === 0) {
-            slidesContainer.innerHTML = '<div class="mySlides-standalone" style="display: block;"><p>No hay programas disponibles para este día.</p></div>';
+            const noDataMessage = !window.firebaseInitialized ? 
+                'Configuración de Firebase requerida. Consulte los comentarios en el código fuente.' :
+                'No hay programas disponibles para este día.';
+            slidesContainer.innerHTML = `<div class="mySlides-standalone" style="display: block;">
+                <p>${noDataMessage}</p>
+                ${!window.firebaseInitialized ? '<p style="font-size: 0.9em; color: #666;">Para conectar con Firestore, configure su proyecto Firebase en el código.</p>' : ''}
+            </div>`;
             return;
         }
 
@@ -964,6 +1107,15 @@ body {
     });
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Firebase data loading
+        setTimeout(() => {
+            loadProgrammingData();
+            loadTop10Config();
+            loadLiveMessage();
+            loadLivePoll();
+        }, 1000); // Small delay to ensure Firebase is initialized
+        
+        // Set initial day filter
         setDayFilterStandalone('Todos');
     });
 
@@ -971,13 +1123,13 @@ body {
     const openTop10ModalButtonStandalone = document.getElementById('openTop10Modal');
     const closeTop10ModalButtonStandalone = document.getElementById('closeTop10Modal');
     const youtubePlaylistContainerStandalone = document.querySelector('.youtube-playlist-container-standalone');
-    const playlistId = 'PL0Tz1eP0c26D6-r_t2r7x-9J3b2r_7K9o';
+    let currentPlaylistId = 'PL0Tz1eP0c26D6-r_t2r7x-9J3b2r_7K9o'; // Default fallback
 
     openTop10ModalButtonStandalone.onclick = function() {
         top10ModalStandalone.style.display = 'flex';
         if (!youtubePlaylistContainerStandalone.querySelector('iframe')) {
             const iframe = document.createElement('iframe');
-            iframe.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
+            iframe.src = `https://www.youtube.com/embed/videoseries?list=${window.currentPlaylistId || currentPlaylistId}`;
             iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
             iframe.allowFullscreen = true;
             youtubePlaylistContainerStandalone.appendChild(iframe);

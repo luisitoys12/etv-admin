@@ -67,7 +67,7 @@
 <body class="min-h-screen bg-gray-100 text-gray-900 p-4 flex items-center justify-center">
 
     <!-- Indicador de carga -->
-    <div id="loading-indicator" class="fixed inset-0 bg-gray-100 flex items-center justify-center z-50">
+    <div id="loading-indicator" class="fixed inset-0 bg-gray-100 flex items-center justify-center z-50 hidden">
         <div class="text-center">
             <svg class="animate-spin h-8 w-8 text-indigo-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -77,30 +77,23 @@
         </div>
     </div>
     
-    <!-- Contenedor del formulario de inicio de sesión -->
-    <div id="login-container" class="w-full max-w-md hidden">
+    <!-- Contenedor del formulario de inicio de sesión por contraseña -->
+    <div id="login-container" class="w-full max-w-md">
         <div class="bg-white p-8 rounded-xl shadow-lg">
-            <h2 class="text-2xl font-bold mb-6 text-center">Iniciar Sesión</h2>
-            <form id="login-form" class="grid gap-4">
+            <h2 class="text-2xl font-bold mb-6 text-center">Panel de Administración</h2>
+            <form id="password-form" class="grid gap-4">
                 <div>
-                    <label for="login-email" class="block text-sm font-medium text-gray-700">Correo Electrónico:</label>
-                    <input type="email" id="login-email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
-                </div>
-                <div>
-                    <label for="login-password" class="block text-sm font-medium text-gray-700">Contraseña:</label>
-                    <input type="password" id="login-password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
+                    <label for="password" class="block text-sm font-medium text-gray-700">Contraseña:</label>
+                    <input type="password" id="password" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border" required>
                 </div>
                 <button type="submit" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors">
-                    Iniciar Sesión
-                </button>
-                <button type="button" id="signup-btn" class="w-full px-4 py-2 text-indigo-600 rounded-md border border-indigo-600 hover:bg-indigo-50 transition-colors">
-                    Crear Cuenta
+                    Acceder
                 </button>
             </form>
         </div>
     </div>
 
-    <!-- Contenedor principal de la aplicación -->
+    <!-- Contenedor principal de la aplicación (inicialmente oculto) -->
     <div class="container mx-auto hidden" id="app-container">
         <header class="text-center py-8 flex justify-between items-center">
             <div>
@@ -112,9 +105,6 @@
                     <span class="font-semibold">ID de Usuario:</span> <span id="user-id"></span>
                 </div>
             </div>
-            <button id="signout-btn" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-                Cerrar Sesión
-            </button>
         </header>
 
         <main class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -282,28 +272,33 @@
 
     <!-- Scripts de Firebase y lógica de la aplicación -->
     <script type="module">
-        // Importar las bibliotecas de Firebase desde CDN
+        // Importar las bibliotecas de Firebase (SOLO Firestore, ya no se necesita Auth)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // NOTA DE SEGURIDAD:
+        // El uso de una contraseña hardcodeada en el código del lado del cliente
+        // no es seguro para una aplicación de producción, ya que es visible para
+        // cualquiera que inspeccione la página. Para una seguridad real, se recomienda
+        // utilizar un sistema de autenticación de backend.
 
         // Variables globales proporcionadas por el entorno de Canvas
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const correctPassword = 'ekustv-media';
 
         // Inicializar Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
-        let userId = null;
+        
+        let userId = 'admin'; // Usamos un ID de usuario estático, ya que no hay autenticación.
 
         // Elementos del DOM
         const loadingIndicator = document.getElementById('loading-indicator');
         const loginContainer = document.getElementById('login-container');
         const appContainer = document.getElementById('app-container');
-        const loginForm = document.getElementById('login-form');
-        const signupBtn = document.getElementById('signup-btn');
-        const signoutBtn = document.getElementById('signout-btn');
+        const passwordForm = document.getElementById('password-form');
+        const passwordInput = document.getElementById('password');
         const programmingTableBody = document.getElementById('programming-table-body');
         const top10Form = document.getElementById('top10-form');
         const liveMessageForm = document.getElementById('live-message-form');
@@ -352,6 +347,44 @@
                 }
 
                 customMessageBox.classList.add('open');
+            });
+        }
+        
+        // Función para iniciar los listeners de Firestore después de un inicio de sesión exitoso
+        function startFirestoreListeners() {
+            userIdSpan.textContent = userId;
+
+            // Configurar listeners de Firestore para cada sección
+            onSnapshot(collection(db, 'programacion'), (snapshot) => {
+                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProgrammingTable(data);
+            });
+
+            onSnapshot(doc(db, 'top10', 'config'), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('top10-image').value = data.image || '';
+                    document.getElementById('top10-playlistId').value = data.playlistId || '';
+                }
+            });
+
+            onSnapshot(doc(db, 'mensajes', 'liveMessage'), (docSnap) => {
+                if (docSnap.exists()) {
+                    document.getElementById('live-message-text').value = docSnap.data().text || '';
+                }
+            });
+
+            onSnapshot(doc(db, 'encuestas', 'currentPoll'), (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    document.getElementById('poll-question').value = data.question || '';
+                    const optionInputs = document.querySelectorAll('#poll-options-container .option-input');
+                    data.options.forEach((opt, index) => {
+                        if (optionInputs[index]) {
+                            optionInputs[index].value = opt.text || '';
+                        }
+                    });
+                }
             });
         }
 
@@ -411,97 +444,21 @@
             });
         };
 
-        // Escuchar el estado de autenticación
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                // Usuario autenticado
-                console.log("Usuario autenticado:", user.uid);
-                userId = user.uid;
-                userIdSpan.textContent = userId;
-                
-                loadingIndicator.classList.add('hidden');
+        // Manejador del formulario de contraseña
+        passwordForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const enteredPassword = passwordInput.value;
+            if (enteredPassword === correctPassword) {
+                console.log('Contraseña correcta. Accediendo al panel.');
                 loginContainer.classList.add('hidden');
                 appContainer.classList.remove('hidden');
-
-                // Configurar listeners de Firestore para cada sección una vez que la autenticación está lista
-                onSnapshot(collection(db, 'programacion'), (snapshot) => {
-                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    renderProgrammingTable(data);
-                });
-
-                onSnapshot(doc(db, 'top10', 'config'), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        document.getElementById('top10-image').value = data.image || '';
-                        document.getElementById('top10-playlistId').value = data.playlistId || '';
-                    }
-                });
-
-                onSnapshot(doc(db, 'mensajes', 'liveMessage'), (docSnap) => {
-                    if (docSnap.exists()) {
-                        document.getElementById('live-message-text').value = docSnap.data().text || '';
-                    }
-                });
-
-                onSnapshot(doc(db, 'encuestas', 'currentPoll'), (docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        document.getElementById('poll-question').value = data.question || '';
-                        const optionInputs = document.querySelectorAll('#poll-options-container .option-input');
-                        data.options.forEach((opt, index) => {
-                            if (optionInputs[index]) {
-                                optionInputs[index].value = opt.text || '';
-                            }
-                        });
-                    }
-                });
+                startFirestoreListeners();
             } else {
-                // No hay usuario autenticado
-                console.log("No hay usuario autenticado.");
-                loadingIndicator.classList.add('hidden');
-                appContainer.classList.add('hidden');
-                loginContainer.classList.remove('hidden');
+                console.log('Contraseña incorrecta.');
+                showCustomMessage('Error de acceso', 'La contraseña es incorrecta. Por favor, inténtalo de nuevo.');
             }
         });
-
-        // Manejador del formulario de inicio de sesión
-        loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            try {
-                await signInWithEmailAndPassword(auth, email, password);
-                console.log('Inicio de sesión exitoso!');
-            } catch (error) {
-                console.error('Error de inicio de sesión:', error);
-                showCustomMessage('Error de Autenticación', 'Credenciales incorrectas o el usuario no existe.');
-            }
-        });
-
-        // Manejador para crear una nueva cuenta
-        signupBtn.addEventListener('click', async () => {
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-            if (email && password) {
-                try {
-                    await createUserWithEmailAndPassword(auth, email, password);
-                    console.log('Cuenta creada con éxito!');
-                    showCustomMessage('Éxito', 'Cuenta creada con éxito. Ahora puedes iniciar sesión.');
-                } catch (error) {
-                    console.error('Error al crear cuenta:', error);
-                    showCustomMessage('Error al crear cuenta', 'Error al crear la cuenta. Revisa que el correo sea válido y la contraseña tenga al menos 6 caracteres.');
-                }
-            } else {
-                showCustomMessage('Error', 'Por favor, introduce un correo electrónico y una contraseña.');
-            }
-        });
-
-        // Manejador para cerrar sesión
-        signoutBtn.addEventListener('click', async () => {
-            await signOut(auth);
-            console.log('Sesión cerrada.');
-        });
-
+        
         // Resto de manejadores de eventos de la UI (igual que antes)
         addDayBtn.addEventListener('click', () => {
             currentEditingDocId = null;
@@ -690,7 +647,7 @@
                 generatePollBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-wand-2 h-5 w-5"><path d="M21 7.766a2 2 0 0 0-2.828-2.828l-8.694 8.693L7.766 12.18a2 2 0 0 0-2.828 2.828l1.415 1.414L2.05 18.064a2 2 0 0 0 .707 3.535l1.414-.707L16 12.18a2 2 0 0 0 2.828-2.828l-1.415-1.414z"/><path d="M16 12.18l-8.694 8.693"/><path d="M7.766 12.18L2.05 18.064"/></svg>`;
             }
         });
-        
+
         // Inicializar los iconos de Lucide
         window.addEventListener('load', () => {
             lucide.createIcons();

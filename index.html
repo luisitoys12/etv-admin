@@ -1,151 +1,1157 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
+<!--
+CONFIGURACIÓN REQUERIDA PARA FIRESTORE:
 
-    <!-- Contenido existente -->
+1. Crear un proyecto en Firebase Console (https://console.firebase.google.com)
+2. Habilitar Firestore Database
+3. Obtener la configuración de Firebase para web
+4. Reemplazar los valores en firebaseConfig más abajo con los datos de tu proyecto
+5. Configurar las reglas de Firestore para permitir lectura pública
 
-    <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getFirestore, collection, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+ESTRUCTURA DE DATOS ESPERADA EN FIRESTORE:
 
-// Configuración de tu proyecto Firebase (REEMPLAZA con tus datos reales)
-const firebaseConfig = {
-  apiKey: "TU_API_KEY",
-  authDomain: "TU_AUTH_DOMAIN",
-  projectId: "TU_PROJECT_ID",
-  // ...el resto de tu config...
-};
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+Colección 'programacion':
+- Documentos con campos: day, title, time, description, image
 
-// --- PROGRAMACIÓN DINÁMICA ---
-let programmingData = [];
-function renderSlidesDynamic(dayFilter = 'Todos') {
-  const slidesContainer = document.querySelector('.slides-standalone');
-  const dotContainer = document.querySelector('.dot-container-standalone');
-  slidesContainer.innerHTML = '';
-  dotContainer.innerHTML = '';
-  const filteredData = dayFilter === 'Todos' ? programmingData : programmingData.filter(p => p.day === dayFilter);
+Documento 'top10/config':
+- Campos: title, image, playlistId
 
-  if (filteredData.length === 0) {
-    slidesContainer.innerHTML = '<div class="mySlides-standalone" style="display: block;"><p>No hay programas disponibles para este día.</p></div>';
-    return;
+Documento 'mensajes/liveMessage':
+- Campos: active (boolean), message (string)
+
+Documento 'encuestas/currentPoll':
+- Campos: active (boolean), question (string), options (array), results (object)
+-->
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+  import { getFirestore, collection, doc, onSnapshot, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+  
+  // Firebase configuration - UPDATE THESE VALUES WITH YOUR FIREBASE PROJECT CONFIG
+  const firebaseConfig = {
+  apiKey: "AIzaSyDTxD_VO23HTB7_E9pCnRkW3VKPcipW2yU",
+  authDomain: "etv-studio.firebaseapp.com",
+  projectId: "etv-studio",
+  storageBucket: "etv-studio.firebasestorage.app",
+  messagingSenderId: "695994324252",
+  appId: "1:695994324252:web:f3d9f7552b228ce45256d9",
+  measurementId: "G-0WBQ4FP074"
+  };
+  
+  // Initialize Firebase
+  try {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    
+    // Make Firebase functions available globally
+    window.firestoreDB = db;
+    window.firestoreCollection = collection;
+    window.firestoreDoc = doc;
+    window.firestoreOnSnapshot = onSnapshot;
+    window.firestoreGetDocs = getDocs;
+    window.firebaseInitialized = true;
+    
+    console.log('Firebase initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Firebase:', error);
+    window.firebaseInitialized = false;
   }
-
-  filteredData.forEach((program, index) => {
-    const slide = document.createElement('div');
-    slide.classList.add('mySlides-standalone');
-    slide.style.display = 'none';
-    slide.innerHTML = `
-      <img src="${program.image}" alt="${program.title}">
-      <h3>${program.title}</h3>
-      <p><strong>Día:</strong> ${program.day}</p>
-      <p><strong>Hora:</strong> ${program.time}</p>
-      <p>${program.description}</p>
-    `;
-    slidesContainer.appendChild(slide);
-
-    const dot = document.createElement('span');
-    dot.classList.add('dot-standalone');
-    dot.onclick = () => currentSlideDynamic(index + 1);
-    dotContainer.appendChild(dot);
-  });
-
-  slideIndexDynamic = 0;
-  showSlidesDynamic(slideIndexDynamic);
+</script>
+<style>
+/* Estilos Globales para un Tema de Verano */
+body {
+    background-color: #f7f9fc; /* Un azul claro muy sutil, como el cielo de verano */
+    font-family: 'Poppins', sans-serif; /* Fuente moderna, limpia y amigable */
 }
-let slideIndexDynamic = 0;
-let slideshowTimeoutDynamic;
-function showSlidesDynamic(n) {
-  const slides = document.querySelectorAll('.mySlides-standalone');
-  const dots = document.querySelectorAll('.dot-standalone');
-  if (slides.length === 0) return;
-  if (n >= slides.length) slideIndexDynamic = 0;
-  if (n < 0) slideIndexDynamic = slides.length - 1;
-  slides.forEach(slide => slide.style.display = 'none');
-  dots.forEach(dot => dot.classList.remove('active-dot-standalone'));
-  slides[slideIndexDynamic].style.display = 'block';
-  if (dots[slideIndexDynamic]) dots[slideIndexDynamic].classList.add('active-dot-standalone');
-  clearTimeout(slideshowTimeoutDynamic);
-  slideshowTimeoutDynamic = setTimeout(() => plusSlidesDynamic(1), 5000);
-}
-function plusSlidesDynamic(n) { showSlidesDynamic(slideIndexDynamic += n); }
-function currentSlideDynamic(n) { showSlidesDynamic(slideIndexDynamic = n - 1); }
-function setDayFilterDynamic(day) {
-  document.querySelectorAll('.day-button-standalone').forEach(button => {
-    button.classList.remove('active');
-    if (button.dataset.day === day) button.classList.add('active');
-  });
-  renderSlidesDynamic(day);
-}
-document.querySelectorAll('.day-button-standalone').forEach(button => {
-  button.addEventListener('click', () => setDayFilterDynamic(button.dataset.day));
-});
-onSnapshot(collection(db, "programacion"), (snapshot) => {
-  programmingData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  setDayFilterDynamic('Todos');
-});
 
-// --- TOP 10 (imagen y playlist dinámicas) ---
-function renderTop10(data) {
-  const img = document.querySelector('.top10-image-container-standalone img');
-  if (img && data.image) img.src = data.image;
-  window.top10PlaylistId = data.playlistId || '';
+/* --- Estilos para el Video Player (Responsive) --- */
+.video-section-standalone {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px; /* Bordes más suaves, como una orilla de playa */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 1000px;
+    margin: 30px auto;
 }
-onSnapshot(doc(db, "top10", "config"), (docSnap) => {
-  if (docSnap.exists()) renderTop10(docSnap.data());
-});
-document.getElementById('openTop10Modal').onclick = function() {
-  document.getElementById('top10ModalStandalone').style.display = 'flex';
-  const container = document.querySelector('.youtube-playlist-container-standalone');
-  container.innerHTML = '';
-  if (window.top10PlaylistId) {
-    const iframe = document.createElement('iframe');
-    iframe.src = `https://www.youtube.com/embed/videoseries?list=${window.top10PlaylistId}`;
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-    iframe.allowFullscreen = true;
-    iframe.style.width = "100%";
-    iframe.style.height = "340px";
-    container.appendChild(iframe);
-  }
-};
-document.getElementById('closeTop10Modal').onclick = function() {
-  document.getElementById('top10ModalStandalone').style.display = 'none';
-};
 
-// --- MENSAJE EN VIVO ---
-onSnapshot(doc(db, "mensajes", "liveMessage"), (docSnap) => {
-  if (docSnap.exists()) {
-    let liveMessage = docSnap.data().text || '';
-    let liveMsgDiv = document.getElementById('live-message');
-    if (!liveMsgDiv) {
-      liveMsgDiv = document.createElement('div');
-      liveMsgDiv.id = 'live-message';
-      liveMsgDiv.style = "background:#ffc107;padding:10px 0;color:#222;text-align:center;font-size:1.3em;font-weight:bold;margin-top:10px;";
-      document.body.prepend(liveMsgDiv);
+.video-section-standalone h2 {
+    font-family: 'Poppins', sans-serif;
+    color: #007bff; /* Azul vibrante, como el océano */
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+.video-container-standalone {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    background-color: #000;
+    border-radius: 12px;
+}
+
+.video-container-standalone video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Estilos para los botones de selección de stream */
+.stream-selector-standalone {
+    margin-top: 25px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.stream-button-standalone {
+    background-color: #20c997; /* Verde menta, fresco y relajante */
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px; /* Botones más redondos y amigables */
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.stream-button-standalone:hover {
+    background-color: #17a2b8; /* Un azul turquesa en el hover */
+    transform: translateY(-3px); /* Efecto de "flotar" */
+    box-shadow: 0 4px 15px rgba(32, 201, 151, 0.4);
+}
+
+.stream-button-standalone.active {
+    background-color: #ffc107; /* Amarillo soleado para el botón activo */
+    box-shadow: 0 3px 10px rgba(255, 193, 7, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Estilos para el bloque de donación */
+.donation-standalone {
+    background-color: #fffaf0; /* Un color crema suave */
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    margin-top: 30px;
+    border: 1px solid #ffc107;
+}
+
+.donation-standalone h3 {
+    font-family: 'Poppins', sans-serif;
+    color: #007bff;
+    font-size: 1.8em;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.donation-standalone p {
+    font-size: 1.1em;
+    color: #495057;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.donation-button-standalone {
+    display: inline-block;
+    background-color: #007bff; /* Azul PayPal */
+    color: white;
+    padding: 12px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.donation-button-standalone:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+/* --- Estilos para el Aviso Importante --- */
+.important-notice-standalone {
+    background-color: #ff7f50; /* Naranja coral vibrante */
+    color: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin: 40px auto;
+    max-width: 1000px;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    animation: pulse-notice 2s infinite;
+}
+
+.important-notice-standalone p {
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.important-notice-standalone p:last-child {
+    margin-bottom: 0;
+    font-size: 1.3em;
+    font-weight: 700;
+}
+
+/* --- Estilos para el Contenedor de Anuncios --- */
+.ad-container-standalone {
+    margin: 40px auto;
+    max-width: 728px;
+    text-align: center;
+    background-color: #f0f8ff; /* Azul cielo muy claro */
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+    color: #6c757d;
+    font-size: 1.3em;
+    border: 1px dashed #ced4da;
+}
+
+/* --- Estilos para el Top 10 Musical --- */
+.top10-section-standalone {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.top10-section-standalone h2 {
+    font-family: 'Poppins', sans-serif;
+    color: #007bff;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+.top10-image-container-standalone {
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.top10-image-container-standalone:hover {
+    transform: scale(1.05); /* Un efecto de zoom para la imagen */
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+}
+
+.top10-image-container-standalone img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 15px;
+    transition: filter 0.3s ease;
+}
+
+.top10-image-container-standalone:hover img {
+    filter: brightness(0.9); /* Un sutil oscurecimiento en el hover */
+}
+
+.top10-image-container-standalone .overlay-text {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.1)); /* Gradiente sutil */
+    color: white;
+    padding: 20px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.4em;
+    font-weight: 600;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+/* --- Estilos para el Pop-up (Modal) --- */
+.modal-standalone {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6); /* Fondo más claro para una sensación de verano */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content-standalone {
+    background-color: #fffaf0; /* Un color crema suave, como la arena */
+    margin: auto;
+    padding: 30px;
+    border: none;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 20px; /* Bordes aún más suaves */
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: animatemodal 0.5s;
+}
+
+.close-button-standalone {
+    color: #6c757d;
+    float: right;
+    font-size: 40px;
+    font-weight: normal;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    transition: color 0.2s ease;
+}
+
+.close-button-standalone:hover,
+.close-button-standalone:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-content-standalone h3 {
+    font-family: 'Poppins', sans-serif;
+    color: #007bff;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 2em;
+    text-align: center;
+    font-weight: 700;
+}
+
+/* --- Estilos para el Slideshow --- */
+.slideshow-container-standalone {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.slideshow-container-standalone h2 {
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    color: #007bff;
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+.day-selector-standalone {
+    text-align: center;
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+.day-button-standalone {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    padding: 12px 22px;
+    border-radius: 30px; /* Botones más redondeados */
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    flex-grow: 1;
+    max-width: 130px;
+    white-space: nowrap;
+}
+
+.day-button-standalone:hover {
+    background-color: #007bff; /* Un color principal al pasar el mouse */
+    color: white;
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+
+.day-button-standalone.active {
+    background-color: #20c997; /* El verde menta como color activo */
+    color: white;
+    border-color: #20c997;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.4);
+}
+
+.mySlides-standalone {
+    padding: 40px 20px;
+    /* ... otros estilos ... */
+}
+
+.mySlides-standalone img {
+    max-width: 90%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    object-fit: cover;
+    max-height: 250px;
+}
+
+.mySlides-standalone h3 {
+    color: #007bff;
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.mySlides-standalone p {
+    color: #555;
+    font-size: 1.1em;
+    line-height: 1.7;
+    margin-bottom: 8px;
+}
+
+.prev-standalone,
+.next-standalone {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    color: white;
+    font-weight: bold;
+    font-size: 28px;
+    transition: background-color 0.3s ease;
+    border-radius: 50%;
+    user-select: none;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.next-standalone {
+    right: 15px; /* Separación de la orilla */
+}
+
+.prev-standalone {
+    left: 15px;
+}
+
+.prev-standalone:hover,
+.next-standalone:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.dot-container-standalone {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.dot-standalone {
+    cursor: pointer;
+    height: 14px;
+    width: 14px;
+    margin: 0 6px;
+    background-color: #ced4da;
+    border-radius: 50%;
+    display: inline-block;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.active-dot-standalone,
+.dot-standalone:hover {
+    background-color: #ffc107; /* Amarillo soleado para el punto activo */
+    transform: scale(1.2);
+}
+
+/* --- Estilos para la encuesta en vivo --- */
+.poll-option-button {
+    background-color: white;
+    color: #20c997;
+    border: 2px solid white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 120px;
+    text-align: center;
+}
+
+.poll-option-button:hover {
+    background-color: #20c997;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(255, 255, 255, 0.3);
+}
+
+.poll-option-button.voted {
+    background-color: #ffc107;
+    color: #333;
+    border-color: #ffc107;
+}
+
+/* --- Ajustes Responsive --- */
+@media screen and (max-width: 768px) {
+    .video-section-standalone,
+    .slideshow-container-standalone,
+    .important-notice-standalone,
+    .top10-section-standalone {
+        padding: 20px;
     }
-    liveMsgDiv.textContent = liveMessage;
-  }
-});
-
-// --- ENCUESTA EN VIVO ---
-onSnapshot(doc(db, "encuestas", "currentPoll"), (docSnap) => {
-  if (docSnap.exists()) {
-    const data = docSnap.data();
-    let pollDiv = document.getElementById('live-poll');
-    if (!pollDiv) {
-      pollDiv = document.createElement('div');
-      pollDiv.id = 'live-poll';
-      pollDiv.style = "background:#e9ecef;padding:20px;border-radius:12px;max-width:500px;margin:30px auto;text-align:center;";
-      document.body.insertBefore(pollDiv, document.body.firstChild.nextSibling);
+    .video-section-standalone h2,
+    .slideshow-container-standalone h2,
+    .top10-section-standalone h2 {
+        font-size: 1.8em;
     }
-    pollDiv.innerHTML = `<h3 style="font-size:1.3em;color:#007bff;margin-bottom:10px;">${data.question}</h3>
-      ${data.options.map((opt, i) => `<div style="margin:8px 0;">${opt.text}</div>`).join("")}`;
-  }
-});
+    .stream-button-standalone,
+    .day-button-standalone {
+        padding: 12px 25px;
+        font-size: 1em;
+        border-radius: 40px;
+    }
+    .day-selector-standalone {
+        gap: 10px;
+    }
+    .mySlides-standalone h3 {
+        font-size: 1.5em;
+    }
+    .mySlides-standalone p {
+        font-size: 1em;
+    }
+    .prev-standalone,
+    .next-standalone {
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+    }
+    .ad-container-standalone {
+        padding: 15px;
+        margin: 30px auto;
+        min-height: 70px;
+    }
+    .important-notice-standalone p {
+        font-size: 1em;
+    }
+    .important-notice-standalone p:last-child {
+        font-size: 1.1em;
+    }
+    .top10-image-container-standalone .overlay-text {
+        font-size: 1.2em;
+        padding: 12px;
+    }
+    .modal-content-standalone {
+        width: 95%;
+        padding: 20px;
+    }
+    .modal-content-standalone h3 {
+        font-size: 1.8em;
+    }
+    .close-button-standalone {
+        font-size: 35px;
+        top: 10px;
+        right: 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .video-section-standalone,
+    .slideshow-container-standalone,
+    .important-notice-standalone,
+    .top10-section-standalone {
+        padding: 15px;
+    }
+    .video-section-standalone h2,
+    .slideshow-container-standalone h2,
+    .top10-section-standalone h2 {
+        font-size: 1.6em;
+    }
+    .stream-button-standalone {
+        padding: 10px 20px;
+        font-size: 0.9em;
+        border-radius: 30px;
+    }
+    .day-button-standalone {
+        padding: 8px 15px;
+        font-size: 0.85em;
+        max-width: 90px;
+        border-radius: 30px;
+    }
+    .day-selector-standalone {
+        gap: 5px;
+    }
+    .mySlides-standalone h3 {
+        font-size: 1.3em;
+    }
+    .mySlides-standalone p {
+        font-size: 0.9em;
+    }
+    .prev-standalone,
+    .next-standalone {
+        font-size: 20px;
+        width: 35px;
+        height: 35px;
+    }
+    .mySlides-standalone img {
+        max-width: 100%;
+        max-height: 200px;
+    }
+    .ad-container-standalone {
+        padding: 10px;
+        margin: 20px auto;
+        min-height: 50px;
+        font-size: 1em;
+    }
+    .important-notice-standalone p {
+        font-size: 0.9em;
+    }
+    .important-notice-standalone p:last-child {
+        font-size: 1em;
+    }
+    .top10-image-container-standalone .overlay-text {
+        font-size: 1em;
+        padding: 8px;
+    }
+    .modal-content-standalone h3 {
+        font-size: 1.5em;
+    }
+    .close-button-standalone {
+        font-size: 30px;
+        top: 5px;
+        right: 15px;
+    }
+}
+</style>
+<section class="video-section-standalone">
+    <h2>Transmisión en Vivo</h2>
+    <div class="stream-selector-standalone">
+        <button class="stream-button-standalone active" data-stream="option1">Opción 1</button>
+        <button class="stream-button-standalone" data-stream="option2">Opción 2</button>
+        <button class="stream-button-standalone" data-stream="option3">Opción 3</button>
+    </div>
+    <div class="video-container-standalone">
+        <video id="myVideoStandalone" controls="" autoplay="" muted=""></video>
+        <div id="video-error-message-standalone" style="color: red; margin-top: 10px; font-weight: bold; display: none;"></div>
+    </div>
+    <p style="margin-top: 20px; font-size: 0.9em; color: #666;">Si el video no se inicia automáticamente, por favor haz clic en el botón de Play.</p>
+    <div class="donation-standalone">
+        <h3>¿Te gusta nuestro contenido?</h3>
+        <p>Apoya a EstacionKuSTV a seguir creando programas de calidad. Tu donación es muy valiosa para nosotros.</p>
+        <a href="https://paypal.me/ekusmedios" target="_blank" class="donation-button-standalone">Dona con PayPal</a>
+    </div>
+</section>
+
+<!-- Live Message Section (will be populated from Firestore) -->
+<div id="liveMessageSection" class="important-notice-standalone" style="display: none;">
+    <p id="liveMessageContent">Cargando mensaje en vivo...</p>
+</div>
+
+<!-- Live Poll Section (will be populated from Firestore) -->
+<div id="livePollSection" class="important-notice-standalone" style="display: none; background-color: #20c997;">
+    <h3 style="color: white; font-size: 1.5em; margin-bottom: 15px;">🗳️ Encuesta en Vivo</h3>
+    <p id="pollQuestion" style="font-size: 1.2em; margin-bottom: 15px;">Cargando encuesta...</p>
+    <div id="pollOptions" style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+        <!-- Poll options will be populated dynamically -->
+    </div>
+    <p id="pollResults" style="font-size: 0.9em; margin-top: 15px; opacity: 0.8;">
+        <!-- Poll results will be shown here -->
+    </p>
+</div>
+
+<div class="important-notice-standalone">
+    <p>¡Cambiamos para ti! Ahora te traemos más opciones y mejores contenidos.</p>
+    <p>Para una experiencia óptima, asegúrate de **permitir HTML5 en tu navegador** y dale la bienvenida al **HLS Streaming**.</p>
+    <p>**EstacionKuSTV es el primer canal joven: documentales, drama, ¡contenido para todos!**</p>
+</div>
+
+<div class="ad-container-standalone">
+    <p>Espacio para tu Publicidad</p>
+</div>
+
+<section class="top10-section-standalone">
+    <h2>Top 10 Musical: ¡Los Éxitos de Julio 2025!</h2>
+    <div class="top10-image-container-standalone" id="openTop10Modal">
+        <img src="https://images.unsplash.com/photo-1470225620780-b889fba42a7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHxtdXNpYyUyMHRvcCUyMDEwJTIwcGxheWxpc3R8ZW5mDB8fHx8MTcwMTk1ODU3NHww&ixlib=rb-4.0.3&q=80&w=800" alt="Top 10 Musical Julio 2025">
+        <div class="overlay-text">Haz clic para ver la Playlist</div>
+    </div>
+    <p style="margin-top: 20px; font-size: 0.9em; color: #666;">Descubre los temas más sonados del momento.</p>
+</section>
+
+<div id="top10ModalStandalone" class="modal-standalone">
+    <div class="modal-content-standalone">
+        <span class="close-button-standalone" id="closeTop10Modal">×</span>
+        <h3>Top 10 Musical: ¡Playlist Exclusiva!</h3>
+        <div class="youtube-playlist-container-standalone"></div>
+        <p style="font-size: 0.9em; color: #666; text-align: center;">La playlist se actualizará automáticamente con los últimos éxitos.</p>
+    </div>
+</div>
+
+<section class="slideshow-container-standalone">
+    <h2>Programación de EstacionKuSTV</h2>
+    <div class="day-selector-standalone">
+        <button class="day-button-standalone" data-day="Lunes">Lunes</button>
+        <button class="day-button-standalone" data-day="Martes">Martes</button>
+        <button class="day-button-standalone" data-day="Miercoles">Miércoles</button>
+        <button class="day-button-standalone" data-day="Jueves">Jueves</button>
+        <button class="day-button-standalone" data-day="Viernes">Viernes</button>
+        <button class="day-button-standalone" data-day="Sabado">Sábado</button>
+        <button class="day-button-standalone" data-day="Domingo">Domingo</button>
+        <button class="day-button-standalone active" data-day="Todos">Todos</button>
+    </div>
+    <div class="slides-standalone"></div>
+    <a class="prev-standalone" onclick="plusSlidesStandalone(-1)">❮</a>
+    <a class="next-standalone" onclick="plusSlidesStandalone(1)">❯</a>
+    <div class="dot-container-standalone"></div>
+</section>
+
+<script>
+    const videoStandalone = document.getElementById('myVideoStandalone');
+    const videoErrorMessageStandalone = document.getElementById('video-error-message-standalone');
+    let hlsStandalone = null;
+
+    const streamUrls = {
+        option1: 'https://micanal.ovh/livestreams/374.X5NYLHNX4RKX.m3u8',
+        option2: 'https://live20.bozztv.com/akamaissh101/ssh101/ekusmedios/playlist.m3u8',
+        option3: 'http://20.84.152.56:5080/LiveApp/streams/c7BPlV9KczjqiYXi156226952109.m3u8'
+    };
+
+    function displayVideoErrorStandalone(message) {
+        videoStandalone.style.display = 'none';
+        videoErrorMessageStandalone.textContent = message;
+        videoErrorMessageStandalone.style.display = 'block';
+    }
+
+    function loadVideoSourceStandalone(url) {
+        if (hlsStandalone) {
+            hlsStandalone.destroy();
+        }
+        videoStandalone.removeAttribute('src');
+
+        if (Hls.isSupported()) {
+            console.log("HLS.js es soportado por este navegador.");
+            hlsStandalone = new Hls();
+            hlsStandalone.loadSource(url);
+            hlsStandalone.attachMedia(videoStandalone);
+            hlsStandalone.on(Hls.Events.MANIFEST_PARSED, function() {
+                console.log("Manifiesto HLS parseado. Intentando reproducir.");
+                videoStandalone.play().catch(e => {
+                    console.warn("Autoplay bloqueado:", e);
+                });
+            });
+            hlsStandalone.on(Hls.Events.ERROR, function(event, data) {
+                console.error('HLS Error Event:', event, 'Data:', data);
+                if (data.fatal) {
+                    let errorMessage = "Error fatal al cargar el video. ";
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            errorMessage += "Problema de red o CORS. Código: " + data.details;
+                            console.error('NETWORK_ERROR:', data);
+                            if (data.details !== Hls.ErrorDetails.MANIFEST_LOAD_ERROR || data.response.code !== 404 || data.response.code !== 403) {
+                                console.log('Intentando recuperar el error de red...');
+                                hlsStandalone.startLoad();
+                            } else {
+                                displayVideoErrorStandalone('No se pudo cargar el stream. Posible URL inválida o problema de servidor (CORS).');
+                            }
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            errorMessage += "Error de medios. El formato del video podría no ser compatible o estar corrupto. Código: " + data.details;
+                            console.error('MEDIA_ERROR:', data);
+                            console.log('Intentando recuperar el error de medios...');
+                            hlsStandalone.recoverMediaError();
+                            break;
+                        default:
+                            errorMessage += "Error desconocido.";
+                            console.error('UNKNOWN FATAL ERROR:', data);
+                            hlsStandalone.destroy();
+                            displayVideoErrorStandalone('Ocurrió un error inesperado. El video no se puede reproducir.');
+                            break;
+                    }
+                    if (data.type !== Hls.ErrorTypes.NETWORK_ERROR || (data.type === Hls.ErrorTypes.NETWORK_ERROR && (data.response.code === 404 || data.response.code === 403))) {
+                        displayVideoErrorStandalone(errorMessage + " Por favor, verifica la URL del stream o la configuración del servidor.");
+                    }
+                } else {
+                    console.warn('HLS Non-fatal Error:', data);
+                }
+            });
+        } else if (videoStandalone.canPlayType('application/vnd.apple.mpegurl')) {
+            console.log("El navegador soporta HLS nativamente (ej. Safari).");
+            videoStandalone.src = url;
+            videoStandalone.addEventListener('loadedmetadata', function() {
+                console.log("Metadatos del video cargados. Intentando reproducir.");
+                videoStandalone.play().catch(e => {
+                    console.warn("Autoplay bloqueado:", e);
+                });
+            });
+            videoStandalone.addEventListener('error', function(e) {
+                console.error("Error nativo de video:", e);
+                displayVideoErrorStandalone('Error al reproducir el video. El stream podría no ser válido o el navegador no puede manejarlo.');
+            });
+        } else {
+            console.warn('Tu navegador no soporta HLS ni con hls.js ni nativamente.');
+            displayVideoErrorStandalone('Lo sentimos, tu navegador no soporta la reproducción de este video. Intenta con un navegador más moderno como Chrome, Firefox, Edge o Safari.');
+        }
+
+        videoStandalone.style.display = 'block';
+        videoErrorMessageStandalone.style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadVideoSourceStandalone(streamUrls.option1);
+    });
+
+    document.querySelectorAll('.stream-button-standalone').forEach(button => {
+        button.addEventListener('click', () => {
+            const selectedStream = button.dataset.stream;
+            const urlToLoad = streamUrls[selectedStream];
+            document.querySelectorAll('.stream-button-standalone').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            loadVideoSourceStandalone(urlToLoad);
+        });
+    });
+
+    let slideIndexStandalone = 0;
+    let slideshowTimeoutStandalone;
+    let currentDayFilterStandalone = 'Todos';
+    let programmingDataStandalone = []; // Will be populated from Firestore
+
+    // Firebase data loading functions
+    async function loadProgrammingData() {
+        if (!window.firebaseInitialized) {
+            console.warn('Firebase not initialized. Using fallback data.');
+            programmingDataStandalone = [];
+            renderSlidesStandalone(currentDayFilterStandalone);
+            return;
+        }
+        
+        try {
+            const programmingCollection = window.firestoreCollection(window.firestoreDB, 'programacion');
+            
+            // Set up real-time listener for programming data
+            window.firestoreOnSnapshot(programmingCollection, (snapshot) => {
+                programmingDataStandalone = [];
+                
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    programmingDataStandalone.push({
+                        id: doc.id,
+                        day: data.day || '',
+                        title: data.title || '',
+                        time: data.time || '',
+                        description: data.description || '',
+                        image: data.image || 'https://images.unsplash.com/photo-1572949646481-92978a3b50c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwxfHxuZXdzfGVufDB8fHx8MTcwMTk1NzcwMXww&ixlib=rb-4.0.3&q=80&w=400'
+                    });
+                });
+                
+                console.log('Programación actualizada desde Firestore:', programmingDataStandalone.length, 'programas');
+                renderSlidesStandalone(currentDayFilterStandalone);
+            });
+        } catch (error) {
+            console.error('Error loading programming data:', error);
+            // Fallback to empty array if Firestore fails
+            programmingDataStandalone = [];
+            renderSlidesStandalone(currentDayFilterStandalone);
+        }
+    }
+
+    async function loadTop10Config() {
+        if (!window.firebaseInitialized) {
+            console.warn('Firebase not initialized. Using default Top 10 config.');
+            return;
+        }
+        
+        try {
+            const top10Doc = window.firestoreDoc(window.firestoreDB, 'top10', 'config');
+            window.firestoreOnSnapshot(top10Doc, (doc) => {
+                if (doc.exists()) {
+                    const data = doc.data();
+                    updateTop10Display(data);
+                } else {
+                    console.log('No Top 10 config found');
+                }
+            });
+        } catch (error) {
+            console.error('Error loading Top 10 config:', error);
+        }
+    }
+
+    function updateTop10Display(config) {
+        const top10Image = document.querySelector('.top10-image-container-standalone img');
+        const top10Title = document.querySelector('.top10-section-standalone h2');
+        
+        if (config.image && top10Image) {
+            top10Image.src = config.image;
+        }
+        if (config.title && top10Title) {
+            top10Title.textContent = config.title;
+        }
+        if (config.playlistId) {
+            window.currentPlaylistId = config.playlistId;
+        }
+    }
+
+    async function loadLiveMessage() {
+        if (!window.firebaseInitialized) {
+            console.warn('Firebase not initialized. Live message disabled.');
+            return;
+        }
+        
+        try {
+            const messageDoc = window.firestoreDoc(window.firestoreDB, 'mensajes', 'liveMessage');
+            window.firestoreOnSnapshot(messageDoc, (doc) => {
+                const liveMessageSection = document.getElementById('liveMessageSection');
+                const liveMessageContent = document.getElementById('liveMessageContent');
+                
+                if (doc.exists()) {
+                    const data = doc.data();
+                    if (data.active && data.message) {
+                        liveMessageContent.textContent = data.message;
+                        liveMessageSection.style.display = 'block';
+                    } else {
+                        liveMessageSection.style.display = 'none';
+                    }
+                } else {
+                    liveMessageSection.style.display = 'none';
+                }
+            });
+        } catch (error) {
+            console.error('Error loading live message:', error);
+        }
+    }
+
+    async function loadLivePoll() {
+        if (!window.firebaseInitialized) {
+            console.warn('Firebase not initialized. Live poll disabled.');
+            return;
+        }
+        
+        try {
+            const pollDoc = window.firestoreDoc(window.firestoreDB, 'encuestas', 'currentPoll');
+            window.firestoreOnSnapshot(pollDoc, (doc) => {
+                const livePollSection = document.getElementById('livePollSection');
+                
+                if (doc.exists()) {
+                    const data = doc.data();
+                    if (data.active) {
+                        updatePollDisplay(data);
+                        livePollSection.style.display = 'block';
+                    } else {
+                        livePollSection.style.display = 'none';
+                    }
+                } else {
+                    livePollSection.style.display = 'none';
+                }
+            });
+        } catch (error) {
+            console.error('Error loading live poll:', error);
+        }
+    }
+
+    function updatePollDisplay(pollData) {
+        const pollQuestion = document.getElementById('pollQuestion');
+        const pollOptions = document.getElementById('pollOptions');
+        const pollResults = document.getElementById('pollResults');
+        
+        if (pollQuestion) {
+            pollQuestion.textContent = pollData.question || 'Pregunta de encuesta';
+        }
+        
+        if (pollOptions && pollData.options) {
+            pollOptions.innerHTML = '';
+            pollData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'poll-option-button';
+                button.textContent = option.text || `Opción ${index + 1}`;
+                button.onclick = () => votePoll(index, pollData.id);
+                pollOptions.appendChild(button);
+            });
+        }
+        
+        if (pollResults && pollData.results) {
+            const totalVotes = Object.values(pollData.results).reduce((sum, votes) => sum + votes, 0);
+            pollResults.textContent = `Total de votos: ${totalVotes}`;
+        }
+    }
+
+    function votePoll(optionIndex, pollId) {
+        // This function would normally update the vote count in Firestore
+        // For now, just show visual feedback
+        const buttons = document.querySelectorAll('.poll-option-button');
+        buttons.forEach(btn => btn.classList.remove('voted'));
+        buttons[optionIndex].classList.add('voted');
+        
+        console.log(`Voted for option ${optionIndex} in poll ${pollId}`);
+        // In a real implementation, you would update Firestore here
+    }
+
+    function renderSlidesStandalone(filterDay) {
+        const slidesContainer = document.querySelector('.slides-standalone');
+        const dotContainer = document.querySelector('.dot-container-standalone');
+        slidesContainer.innerHTML = '';
+        dotContainer.innerHTML = '';
+        const filteredData = filterDay === 'Todos' ?
+            programmingDataStandalone :
+            programmingDataStandalone.filter(program => program.day === filterDay);
+
+        if (filteredData.length === 0) {
+            const noDataMessage = !window.firebaseInitialized ? 
+                'Configuración de Firebase requerida. Consulte los comentarios en el código fuente.' :
+                'No hay programas disponibles para este día.';
+            slidesContainer.innerHTML = `<div class="mySlides-standalone" style="display: block;">
+                <p>${noDataMessage}</p>
+                ${!window.firebaseInitialized ? '<p style="font-size: 0.9em; color: #666;">Para conectar con Firestore, configure su proyecto Firebase en el código.</p>' : ''}
+            </div>`;
+            return;
+        }
+
+        filteredData.forEach((program, index) => {
+            const slide = document.createElement('div');
+            slide.classList.add('mySlides-standalone');
+            slide.style.display = 'none';
+            slide.innerHTML = `
+                <img src="${program.image}" alt="${program.title}">
+                <h3>${program.title}</h3>
+                <p><strong>Día:</strong> ${program.day}</p>
+                <p><strong>Hora:</strong> ${program.time}</p>
+                <p>${program.description}</p>
+            `;
+            slidesContainer.appendChild(slide);
+
+            const dot = document.createElement('span');
+            dot.classList.add('dot-standalone');
+            dot.onclick = () => currentSlideStandalone(index + 1);
+            dotContainer.appendChild(dot);
+        });
+
+        slideIndexStandalone = 0;
+        showSlidesStandalone(slideIndexStandalone);
+    }
+
+    function showSlidesStandalone(n) {
+        const slides = document.querySelectorAll('.mySlides-standalone');
+        const dots = document.querySelectorAll('.dot-standalone');
+
+        if (slides.length === 0) return;
+        if (n >= slides.length) {
+            slideIndexStandalone = 0;
+        }
+        if (n < 0) {
+            slideIndexStandalone = slides.length - 1;
+        }
+
+        slides.forEach(slide => slide.style.display = 'none');
+        dots.forEach(dot => dot.classList.remove('active-dot-standalone'));
+        slides[slideIndexStandalone].style.display = 'block';
+
+        if (dots[slideIndexStandalone]) {
+            dots[slideIndexStandalone].classList.add('active-dot-standalone');
+        }
+
+        const slidesContainer = document.querySelector('.slides-standalone');
+        slidesContainer.style.transform = `translateX(-${slideIndexStandalone * 100}%)`;
+
+        clearTimeout(slideshowTimeoutStandalone);
+        slideshowTimeoutStandalone = setTimeout(() => plusSlidesStandalone(1), 5000);
+    }
+
+    function plusSlidesStandalone(n) {
+        showSlidesStandalone(slideIndexStandalone += n);
+    }
+
+    function currentSlideStandalone(n) {
+        showSlidesStandalone(slideIndexStandalone = n - 1);
+    }
+
+    function setDayFilterStandalone(day) {
+        currentDayFilterStandalone = day;
+        const dayButtons = document.querySelectorAll('.day-button-standalone');
+        dayButtons.forEach(button => {
+            button.classList.remove('active');
+            if (button.dataset.day === day) {
+                button.classList.add('active');
+            }
+        });
+        renderSlidesStandalone(currentDayFilterStandalone);
+    }
+
+    document.querySelectorAll('.day-button-standalone').forEach(button => {
+        button.addEventListener('click', () => {
+            const day = button.dataset.day;
+            setDayFilterStandalone(day);
+        });
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Initialize Firebase data loading
+        setTimeout(() => {
+            loadProgrammingData();
+            loadTop10Config();
+            loadLiveMessage();
+            loadLivePoll();
+        }, 1000); // Small delay to ensure Firebase is initialized
+        
+        // Set initial day filter
+        setDayFilterStandalone('Todos');
+    });
+
+    const top10ModalStandalone = document.getElementById('top10ModalStandalone');
+    const openTop10ModalButtonStandalone = document.getElementById('openTop10Modal');
+    const closeTop10ModalButtonStandalone = document.getElementById('closeTop10Modal');
+    const youtubePlaylistContainerStandalone = document.querySelector('.youtube-playlist-container-standalone');
+    let currentPlaylistId = 'PL0Tz1eP0c26D6-r_t2r7x-9J3b2r_7K9o'; // Default fallback
+
+    openTop10ModalButtonStandalone.onclick = function() {
+        top10ModalStandalone.style.display = 'flex';
+        if (!youtubePlaylistContainerStandalone.querySelector('iframe')) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/videoseries?list=${window.currentPlaylistId || currentPlaylistId}`;
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+            iframe.allowFullscreen = true;
+            youtubePlaylistContainerStandalone.appendChild(iframe);
+        }
+    }
+
+    closeTop10ModalButtonStandalone.onclick = function() {
+        top10ModalStandalone.style.display = 'none';
+        const iframe = youtubePlaylistContainerStandalone.querySelector('iframe');
+        if (iframe) {
+            iframe.src = iframe.src;
+        }
+    }
+
+    window.onclick = function(event) {
+        if (event.target == top10ModalStandalone) {
+            top10ModalStandalone.style.display = 'none';
+            const iframe = youtubePlaylistContainerStandalone.querySelector('iframe');
+            if (iframe) {
+                iframe.src = iframe.src;
+            }
+        }
+    }
 </script>

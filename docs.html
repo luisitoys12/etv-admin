@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentación de Configuración de Firestore - ETV Admin</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f7fa;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            border-left: 4px solid #3498db;
+            padding-left: 15px;
+        }
+        h3 {
+            color: #2980b9;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+        .code-block {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .json-example {
+            background-color: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-left: 4px solid #17a2b8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .step {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .step-number {
+            background-color: #3498db;
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        ul li {
+            margin: 8px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            font-style: italic;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📚 Documentación de Configuración de Firestore para ETV Admin</h1>
+        
+        <div class="info">
+            <strong>📋 Resumen:</strong> Esta documentación te guiará paso a paso para configurar Firebase y Firestore para que el proyecto ETV Admin funcione correctamente. Incluye la estructura completa de datos, ejemplos JSON y configuración de permisos.
+        </div>
+
+        <h2>🚀 1. Configuración Inicial de Firebase</h2>
+        
+        <h3>Paso 1: Crear Proyecto en Firebase</h3>
+        <div class="step">
+            <span class="step-number">1</span>
+            <strong>Accede a Firebase Console:</strong>
+            <ul>
+                <li>Ve a <a href="https://console.firebase.google.com" target="_blank">https://console.firebase.google.com</a></li>
+                <li>Inicia sesión con tu cuenta de Google</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">2</span>
+            <strong>Crear nuevo proyecto:</strong>
+            <ul>
+                <li>Haz clic en "Crear un proyecto"</li>
+                <li>Introduce un nombre para tu proyecto (ej: "etv-studio")</li>
+                <li>Configura Google Analytics (opcional)</li>
+                <li>Haz clic en "Crear proyecto"</li>
+            </ul>
+        </div>
+
+        <h3>Paso 2: Habilitar Firestore Database</h3>
+        <div class="step">
+            <span class="step-number">3</span>
+            <strong>Activar Firestore:</strong>
+            <ul>
+                <li>En el panel de Firebase, ve a "Firestore Database"</li>
+                <li>Haz clic en "Crear base de datos"</li>
+                <li>Selecciona "Comenzar en modo de prueba" (configuraremos las reglas después)</li>
+                <li>Elige una ubicación para tu base de datos (recomendado: más cercana a tus usuarios)</li>
+            </ul>
+        </div>
+
+        <h3>Paso 3: Obtener Configuración Web</h3>
+        <div class="step">
+            <span class="step-number">4</span>
+            <strong>Registrar aplicación web:</strong>
+            <ul>
+                <li>En "Configuración del proyecto" → "Tus aplicaciones"</li>
+                <li>Haz clic en el ícono web (&lt;/&gt;)</li>
+                <li>Registra tu aplicación con un nombre</li>
+                <li>Copia la configuración que aparece:</li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+const firebaseConfig = {
+  apiKey: "tu-api-key",
+  authDomain: "tu-proyecto.firebaseapp.com",
+  projectId: "tu-proyecto-id",
+  storageBucket: "tu-proyecto.firebasestorage.app",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef123456",
+  measurementId: "G-ABCDEF1234"
+};
+        </div>
+
+        <div class="step">
+            <span class="step-number">5</span>
+            <strong>Actualizar archivos del proyecto:</strong>
+            <ul>
+                <li>Reemplaza la configuración en <code>index.html</code> (líneas 31-39)</li>
+                <li>Reemplaza la configuración en <code>admin.html</code> si está usando valores de prueba</li>
+            </ul>
+        </div>
+
+        <h2>🗂️ 2. Estructura de Colecciones y Documentos</h2>
+
+        <div class="warning">
+            <strong>⚠️ Importante:</strong> La estructura de datos debe seguir exactamente este formato para que la aplicación funcione correctamente.
+        </div>
+
+        <h3>Colección "programacion"</h3>
+        <p><strong>Descripción:</strong> Almacena la programación semanal del canal de televisión.</p>
+        <p><strong>Estructura:</strong> Cada documento representa un programa y debe tener los siguientes campos:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Campo</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Requerido</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>title</td>
+                    <td>string</td>
+                    <td>Nombre del programa</td>
+                    <td>Sí</td>
+                </tr>
+                <tr>
+                    <td>day</td>
+                    <td>string</td>
+                    <td>Día de la semana (Lunes, Martes, etc.)</td>
+                    <td>Sí</td>
+                </tr>
+                <tr>
+                    <td>time</td>
+                    <td>string</td>
+                    <td>Horario de transmisión</td>
+                    <td>Sí</td>
+                </tr>
+                <tr>
+                    <td>description</td>
+                    <td>string</td>
+                    <td>Descripción del programa</td>
+                    <td>Sí</td>
+                </tr>
+                <tr>
+                    <td>image</td>
+                    <td>string</td>
+                    <td>URL de la imagen promocional</td>
+                    <td>Sí</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Ejemplo JSON:</strong></p>
+        <div class="json-example">
+{
+  "title": "Noticias ETV",
+  "day": "Lunes",
+  "time": "20:00",
+  "description": "Informativo nocturno con las noticias más relevantes del día, análisis político y deportes.",
+  "image": "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400"
+}
+        </div>
+
+        <div class="json-example">
+{
+  "title": "Música y Más",
+  "day": "Viernes",
+  "time": "18:00",
+  "description": "Programa musical con los últimos éxitos y entrevistas a artistas emergentes.",
+  "image": "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400"
+}
+        </div>
+
+        <h3>Colección "top10" → Documento "config"</h3>
+        <p><strong>Descripción:</strong> Configuración del Top 10 musical que aparece en la página principal.</p>
+        <p><strong>ID del documento:</strong> <code>config</code> (exactamente así)</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Campo</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Requerido</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>image</td>
+                    <td>string</td>
+                    <td>URL de la imagen del Top 10</td>
+                    <td>Sí</td>
+                </tr>
+                <tr>
+                    <td>playlistId</td>
+                    <td>string</td>
+                    <td>ID de la playlist de YouTube</td>
+                    <td>Sí</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Ejemplo JSON:</strong></p>
+        <div class="json-example">
+{
+  "image": "https://images.unsplash.com/photo-1470225620780-b889fba42a7c?w=800",
+  "playlistId": "PL0Tz1eP0c26D6-r_t2r7x-9J3b2r_7K9o"
+}
+        </div>
+
+        <h3>Colección "mensajes" → Documento "liveMessage"</h3>
+        <p><strong>Descripción:</strong> Mensaje en vivo que aparece en la parte superior de la página cuando está activo.</p>
+        <p><strong>ID del documento:</strong> <code>liveMessage</code> (exactamente así)</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Campo</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Requerido</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>text</td>
+                    <td>string</td>
+                    <td>Texto del mensaje en vivo</td>
+                    <td>Sí</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Ejemplo JSON:</strong></p>
+        <div class="json-example">
+{
+  "text": "🔴 TRANSMISIÓN ESPECIAL: Cobertura en vivo del evento musical más esperado del año. ¡No te lo pierdas!"
+}
+        </div>
+
+        <h3>Colección "encuestas" → Documento "currentPoll"</h3>
+        <p><strong>Descripción:</strong> Encuesta interactiva que aparece durante la transmisión en vivo.</p>
+        <p><strong>ID del documento:</strong> <code>currentPoll</code> (exactamente así)</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Campo</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                    <th>Requerido</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>question</td>
+                    <td>string</td>
+                    <td>Pregunta de la encuesta</td>
+                    <td>Sí</td>
+                </tr>
+                <tr>
+                    <td>options</td>
+                    <td>array</td>
+                    <td>Array de objetos con las opciones de respuesta</td>
+                    <td>Sí</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Estructura de cada opción:</strong></p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Campo</th>
+                    <th>Tipo</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>text</td>
+                    <td>string</td>
+                    <td>Texto de la opción</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <p><strong>Ejemplo JSON:</strong></p>
+        <div class="json-example">
+{
+  "question": "¿Cuál es tu género musical favorito?",
+  "options": [
+    {
+      "text": "Rock"
+    },
+    {
+      "text": "Pop"
+    },
+    {
+      "text": "Reggaeton"
+    }
+  ]
+}
+        </div>
+
+        <h2>🔒 3. Configuración de Permisos en Firestore</h2>
+
+        <p>Para que la aplicación funcione correctamente, necesitas configurar las reglas de seguridad de Firestore para permitir <strong>lectura pública</strong> de los datos.</p>
+
+        <h3>Configurar Reglas de Seguridad</h3>
+        <div class="step">
+            <span class="step-number">6</span>
+            <strong>Acceder a las reglas:</strong>
+            <ul>
+                <li>En Firebase Console, ve a "Firestore Database"</li>
+                <li>Haz clic en la pestaña "Reglas"</li>
+                <li>Reemplaza las reglas existentes con las siguientes:</li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir lectura pública para todas las colecciones necesarias
+    match /programacion/{document} {
+      allow read: if true;
+      allow write: if false; // Solo lectura pública
+    }
+    
+    match /top10/{document} {
+      allow read: if true;
+      allow write: if false; // Solo lectura pública
+    }
+    
+    match /mensajes/{document} {
+      allow read: if true;
+      allow write: if false; // Solo lectura pública
+    }
+    
+    match /encuestas/{document} {
+      allow read: if true;
+      allow write: if false; // Solo lectura pública
+    }
+    
+    // Bloquear acceso a otras colecciones
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Nota de Seguridad:</strong> Estas reglas permiten lectura pública pero NO escritura. Para administrar el contenido, necesitarás usar el panel de administración (admin.html) o la consola de Firebase directamente.
+        </div>
+
+        <h3>Reglas Alternativas (con Autenticación para Escritura)</h3>
+        <p>Si deseas permitir escritura desde el panel de administración, puedes usar estas reglas más permisivas:</p>
+
+        <div class="code-block">
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permitir lectura pública y escritura para usuarios autenticados
+    match /programacion/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /top10/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /mensajes/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    match /encuestas/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
+        </div>
+
+        <h2>📝 4. Pasos de Implementación</h2>
+
+        <div class="step">
+            <span class="step-number">7</span>
+            <strong>Crear las colecciones:</strong>
+            <ul>
+                <li>En Firestore Console, crea manualmente cada colección</li>
+                <li>Agrega al menos un documento de ejemplo en cada colección</li>
+                <li>Usa los ejemplos JSON proporcionados arriba</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">8</span>
+            <strong>Probar la conexión:</strong>
+            <ul>
+                <li>Abre <code>index.html</code> en un navegador</li>
+                <li>Verifica que la programación se carga correctamente</li>
+                <li>Comprueba que el Top 10 musical aparece</li>
+                <li>Confirma que los mensajes y encuestas funcionan</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <span class="step-number">9</span>
+            <strong>Configurar administración:</strong>
+            <ul>
+                <li>Abre <code>admin.html</code> para gestionar el contenido</li>
+                <li>Verifica que puedes agregar, editar y eliminar programas</li>
+                <li>Prueba la actualización de mensajes y encuestas</li>
+            </ul>
+        </div>
+
+        <h2>🔧 5. Solución de Problemas</h2>
+
+        <h3>Error: "Firebase not initialized"</h3>
+        <ul>
+            <li>Verifica que la configuración de Firebase esté correcta</li>
+            <li>Comprueba que el projectId coincida con tu proyecto</li>
+            <li>Asegúrate de que Firestore esté habilitado</li>
+        </ul>
+
+        <h3>Error: "Permission denied"</h3>
+        <ul>
+            <li>Revisa las reglas de seguridad de Firestore</li>
+            <li>Verifica que las reglas permitan lectura pública</li>
+            <li>Publica las reglas después de editarlas</li>
+        </ul>
+
+        <h3>Datos no aparecen en la página</h3>
+        <ul>
+            <li>Verifica que los nombres de las colecciones sean exactos</li>
+            <li>Comprueba que los IDs de documentos sean correctos</li>
+            <li>Asegúrate de que los campos tengan los nombres esperados</li>
+        </ul>
+
+        <h2>📱 6. Estructura Final Recomendada</h2>
+
+        <div class="info">
+            <strong>🎯 Resumen de la estructura completa que debes tener en Firestore:</strong>
+        </div>
+
+        <div class="code-block">
+📁 Firestore Database
+├── 📂 programacion/
+│   ├── 📄 Lunes (documento con campos: title, day, time, description, image)
+│   ├── 📄 Martes (documento con campos: title, day, time, description, image)
+│   ├── 📄 Miercoles (documento con campos: title, day, time, description, image)
+│   ├── 📄 Jueves (documento con campos: title, day, time, description, image)
+│   ├── 📄 Viernes (documento con campos: title, day, time, description, image)
+│   ├── 📄 Sabado (documento con campos: title, day, time, description, image)
+│   └── 📄 Domingo (documento con campos: title, day, time, description, image)
+├── 📂 top10/
+│   └── 📄 config (campos: image, playlistId)
+├── 📂 mensajes/
+│   └── 📄 liveMessage (campo: text)
+└── 📂 encuestas/
+    └── 📄 currentPoll (campos: question, options[])
+        </div>
+
+        <div class="footer">
+            <p><strong>Derechos reservados ekusmedios and ekustv based AI code with love</strong></p>
+        </div>
+    </div>
+</body>
+</html>

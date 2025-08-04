@@ -1,338 +1,1004 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Administración - EstacionKuSTV</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f7f9fc;
-        }
-        .container {
-            margin-top: 50px;
-        }
-        .card {
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border: none;
-            border-radius: 12px;
-        }
-        h2 {
-            color: #007bff;
-        }
-        .form-control, .btn {
-            border-radius: 50px;
-        }
-        .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-        .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border-color: #c3e6cb;
-            border-radius: 12px;
-        }
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border-color: #f5c6cb;
-            border-radius: 12px;
-        }
-        #login-section {
-            max-width: 400px;
-            margin: auto;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<style>
+/* Estilos Globales para un Tema de Verano */
+body {
+    background-color: #f7f9fc; /* Un azul claro muy sutil, como el cielo de verano */
+    font-family: 'Poppins', sans-serif; /* Fuente moderna, limpia y amigable */
+}
 
-<div class="container" id="login-section">
-    <h2>Login de Administrador</h2>
-    <div class="card p-4">
-        <div class="form-group">
-            <input type="password" class="form-control" id="admin-password" placeholder="Ingresa tu contraseña">
-        </div>
-        <button class="btn btn-primary btn-lg" id="login-btn">Entrar</button>
-        <div id="login-status" class="mt-3"></div>
+/* --- Estilos para el Video Player (Responsive) --- */
+.video-section-standalone {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px; /* Bordes más suaves, como una orilla de playa */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 1000px;
+    margin: 30px auto;
+}
+
+.video-section-standalone h2 {
+    font-family: 'Poppins', sans-serif;
+    color: #007bff; /* Azul vibrante, como el océano */
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+.video-container-standalone {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    background-color: #000;
+    border-radius: 12px;
+}
+
+.video-container-standalone video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Estilos para los botones de selección de stream */
+.stream-selector-standalone {
+    margin-top: 25px;
+    margin-bottom: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.stream-button-standalone {
+    background-color: #20c997; /* Verde menta, fresco y relajante */
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px; /* Botones más redondos y amigables */
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 600;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.stream-button-standalone:hover {
+    background-color: #17a2b8; /* Un azul turquesa en el hover */
+    transform: translateY(-3px); /* Efecto de "flotar" */
+    box-shadow: 0 4px 15px rgba(32, 201, 151, 0.4);
+}
+
+.stream-button-standalone.active {
+    background-color: #ffc107; /* Amarillo soleado para el botón activo */
+    box-shadow: 0 3px 10px rgba(255, 193, 7, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Estilos para el bloque de donación */
+.donation-standalone {
+    background-color: #fffaf0; /* Un color crema suave */
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    text-align: center;
+    margin-top: 30px;
+    border: 1px solid #ffc107;
+}
+
+.donation-standalone h3 {
+    font-family: 'Poppins', sans-serif;
+    color: #007bff;
+    font-size: 1.8em;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.donation-standalone p {
+    font-size: 1.1em;
+    color: #495057;
+    margin-bottom: 20px;
+    line-height: 1.6;
+}
+
+.donation-button-standalone {
+    display: inline-block;
+    background-color: #007bff; /* Azul PayPal */
+    color: white;
+    padding: 12px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.donation-button-standalone:hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+/* --- Estilos para el Aviso Importante --- */
+.important-notice-standalone {
+    background-color: #ff7f50; /* Naranja coral vibrante */
+    color: white;
+    padding: 25px;
+    border-radius: 12px;
+    margin: 40px auto;
+    max-width: 1000px;
+    text-align: center;
+    font-family: 'Poppins', sans-serif;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    animation: pulse-notice 2s infinite;
+}
+
+.important-notice-standalone p {
+    margin: 0 0 10px 0;
+    font-size: 1.2em;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+.important-notice-standalone p:last-child {
+    margin-bottom: 0;
+    font-size: 1.3em;
+    font-weight: 700;
+}
+
+/* --- Estilos para el Contenedor de Anuncios --- */
+.ad-container-standalone {
+    margin: 40px auto;
+    max-width: 728px;
+    text-align: center;
+    background-color: #f0f8ff; /* Azul cielo muy claro */
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    min-height: 90px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Poppins', sans-serif;
+    color: #6c757d;
+    font-size: 1.3em;
+    border: 1px dashed #ced4da;
+}
+
+/* --- Estilos para el Top 10 Musical --- */
+.top10-section-standalone {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.top10-section-standalone h2 {
+    font-family: 'Poppins', sans-serif;
+    color: #007bff;
+    margin-top: 0;
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+.top10-image-container-standalone {
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.top10-image-container-standalone:hover {
+    transform: scale(1.05); /* Un efecto de zoom para la imagen */
+    box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+}
+
+.top10-image-container-standalone img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 15px;
+    transition: filter 0.3s ease;
+}
+
+.top10-image-container-standalone:hover img {
+    filter: brightness(0.9); /* Un sutil oscurecimiento en el hover */
+}
+
+.top10-image-container-standalone .overlay-text {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.1)); /* Gradiente sutil */
+    color: white;
+    padding: 20px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 1.4em;
+    font-weight: 600;
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+/* --- Estilos para el Pop-up (Modal) --- */
+.modal-standalone {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6); /* Fondo más claro para una sensación de verano */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content-standalone {
+    background-color: #fffaf0; /* Un color crema suave, como la arena */
+    margin: auto;
+    padding: 30px;
+    border: none;
+    width: 90%;
+    max-width: 800px;
+    border-radius: 20px; /* Bordes aún más suaves */
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    animation: animatemodal 0.5s;
+}
+
+.close-button-standalone {
+    color: #6c757d;
+    float: right;
+    font-size: 40px;
+    font-weight: normal;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    transition: color 0.2s ease;
+}
+
+.close-button-standalone:hover,
+.close-button-standalone:focus {
+    color: #000;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-content-standalone h3 {
+    font-family: 'Poppins', sans-serif;
+    color: #007bff;
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 2em;
+    text-align: center;
+    font-weight: 700;
+}
+
+/* --- Estilos para el Slideshow --- */
+.slideshow-container-standalone {
+    background-color: #ffffff;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+    max-width: 1000px;
+    margin: 40px auto;
+}
+
+.slideshow-container-standalone h2 {
+    font-family: 'Poppins', sans-serif;
+    text-align: center;
+    color: #007bff;
+    margin-bottom: 25px;
+    font-size: 2.2em;
+    font-weight: 700;
+}
+
+.day-selector-standalone {
+    text-align: center;
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+.day-button-standalone {
+    background-color: #e9ecef;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    padding: 12px 22px;
+    border-radius: 30px; /* Botones más redondeados */
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    flex-grow: 1;
+    max-width: 130px;
+    white-space: nowrap;
+}
+
+.day-button-standalone:hover {
+    background-color: #007bff; /* Un color principal al pasar el mouse */
+    color: white;
+    border-color: #007bff;
+    transform: translateY(-2px);
+}
+
+.day-button-standalone.active {
+    background-color: #20c997; /* El verde menta como color activo */
+    color: white;
+    border-color: #20c997;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(32, 201, 151, 0.4);
+}
+
+.mySlides-standalone {
+    padding: 40px 20px;
+    /* ... otros estilos ... */
+}
+
+.mySlides-standalone img {
+    max-width: 90%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    object-fit: cover;
+    max-height: 250px;
+}
+
+.mySlides-standalone h3 {
+    color: #007bff;
+    font-size: 2em;
+    font-weight: 700;
+}
+
+.mySlides-standalone p {
+    color: #555;
+    font-size: 1.1em;
+    line-height: 1.7;
+    margin-bottom: 8px;
+}
+
+.prev-standalone,
+.next-standalone {
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 45px;
+    height: 45px;
+    padding: 0;
+    color: white;
+    font-weight: bold;
+    font-size: 28px;
+    transition: background-color 0.3s ease;
+    border-radius: 50%;
+    user-select: none;
+    background-color: rgba(0, 0, 0, 0.4);
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.next-standalone {
+    right: 15px; /* Separación de la orilla */
+}
+
+.prev-standalone {
+    left: 15px;
+}
+
+.prev-standalone:hover,
+.next-standalone:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.dot-container-standalone {
+    margin-top: 25px;
+    text-align: center;
+}
+
+.dot-standalone {
+    cursor: pointer;
+    height: 14px;
+    width: 14px;
+    margin: 0 6px;
+    background-color: #ced4da;
+    border-radius: 50%;
+    display: inline-block;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.active-dot-standalone,
+.dot-standalone:hover {
+    background-color: #ffc107; /* Amarillo soleado para el punto activo */
+    transform: scale(1.2);
+}
+
+/* --- Ajustes Responsive --- */
+@media screen and (max-width: 768px) {
+    .video-section-standalone,
+    .slideshow-container-standalone,
+    .important-notice-standalone,
+    .top10-section-standalone {
+        padding: 20px;
+    }
+    .video-section-standalone h2,
+    .slideshow-container-standalone h2,
+    .top10-section-standalone h2 {
+        font-size: 1.8em;
+    }
+    .stream-button-standalone,
+    .day-button-standalone {
+        padding: 12px 25px;
+        font-size: 1em;
+        border-radius: 40px;
+    }
+    .day-selector-standalone {
+        gap: 10px;
+    }
+    .mySlides-standalone h3 {
+        font-size: 1.5em;
+    }
+    .mySlides-standalone p {
+        font-size: 1em;
+    }
+    .prev-standalone,
+    .next-standalone {
+        font-size: 24px;
+        width: 40px;
+        height: 40px;
+    }
+    .ad-container-standalone {
+        padding: 15px;
+        margin: 30px auto;
+        min-height: 70px;
+    }
+    .important-notice-standalone p {
+        font-size: 1em;
+    }
+    .important-notice-standalone p:last-child {
+        font-size: 1.1em;
+    }
+    .top10-image-container-standalone .overlay-text {
+        font-size: 1.2em;
+        padding: 12px;
+    }
+    .modal-content-standalone {
+        width: 95%;
+        padding: 20px;
+    }
+    .modal-content-standalone h3 {
+        font-size: 1.8em;
+    }
+    .close-button-standalone {
+        font-size: 35px;
+        top: 10px;
+        right: 20px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .video-section-standalone,
+    .slideshow-container-standalone,
+    .important-notice-standalone,
+    .top10-section-standalone {
+        padding: 15px;
+    }
+    .video-section-standalone h2,
+    .slideshow-container-standalone h2,
+    .top10-section-standalone h2 {
+        font-size: 1.6em;
+    }
+    .stream-button-standalone {
+        padding: 10px 20px;
+        font-size: 0.9em;
+        border-radius: 30px;
+    }
+    .day-button-standalone {
+        padding: 8px 15px;
+        font-size: 0.85em;
+        max-width: 90px;
+        border-radius: 30px;
+    }
+    .day-selector-standalone {
+        gap: 5px;
+    }
+    .mySlides-standalone h3 {
+        font-size: 1.3em;
+    }
+    .mySlides-standalone p {
+        font-size: 0.9em;
+    }
+    .prev-standalone,
+    .next-standalone {
+        font-size: 20px;
+        width: 35px;
+        height: 35px;
+    }
+    .mySlides-standalone img {
+        max-width: 100%;
+        max-height: 200px;
+    }
+    .ad-container-standalone {
+        padding: 10px;
+        margin: 20px auto;
+        min-height: 50px;
+        font-size: 1em;
+    }
+    .important-notice-standalone p {
+        font-size: 0.9em;
+    }
+    .important-notice-standalone p:last-child {
+        font-size: 1em;
+    }
+    .top10-image-container-standalone .overlay-text {
+        font-size: 1em;
+        padding: 8px;
+    }
+    .modal-content-standalone h3 {
+        font-size: 1.5em;
+    }
+    .close-button-standalone {
+        font-size: 30px;
+        top: 5px;
+        right: 15px;
+    }
+}
+</style>
+<section class="video-section-standalone">
+    <h2>Transmisión en Vivo</h2>
+    <div class="stream-selector-standalone">
+        <button class="stream-button-standalone active" data-stream="option1">Opción 1</button>
+        <button class="stream-button-standalone" data-stream="option2">Opción 2</button>
+        <button class="stream-button-standalone" data-stream="option3">Opción 3</button>
+    </div>
+    <div class="video-container-standalone">
+        <video id="myVideoStandalone" controls="" autoplay="" muted=""></video>
+        <div id="video-error-message-standalone" style="color: red; margin-top: 10px; font-weight: bold; display: none;"></div>
+    </div>
+    <p style="margin-top: 20px; font-size: 0.9em; color: #666;">Si el video no se inicia automáticamente, por favor haz clic en el botón de Play.</p>
+    <div class="donation-standalone">
+        <h3>¿Te gusta nuestro contenido?</h3>
+        <p>Apoya a EstacionKuSTV a seguir creando programas de calidad. Tu donación es muy valiosa para nosotros.</p>
+        <a href="https://paypal.me/ekusmedios" target="_blank" class="donation-button-standalone">Dona con PayPal</a>
+    </div>
+</section>
+
+<div class="important-notice-standalone">
+    <p>¡Cambiamos para ti! Ahora te traemos más opciones y mejores contenidos.</p>
+    <p>Para una experiencia óptima, asegúrate de **permitir HTML5 en tu navegador** y dale la bienvenida al **HLS Streaming**.</p>
+    <p>**EstacionKuSTV es el primer canal joven: documentales, drama, ¡contenido para todos!**</p>
+</div>
+
+<div class="ad-container-standalone">
+    <p>Espacio para tu Publicidad</p>
+</div>
+
+<section class="top10-section-standalone">
+    <h2>Top 10 Musical: ¡Los Éxitos de Julio 2025!</h2>
+    <div class="top10-image-container-standalone" id="openTop10Modal">
+        <img src="https://images.unsplash.com/photo-1470225620780-b889fba42a7c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHxtdXNpYyUyMHRvcCUyMDEwJTIwcGxheWxpc3R8ZW5mDB8fHx8MTcwMTk1ODU3NHww&ixlib=rb-4.0.3&q=80&w=800" alt="Top 10 Musical Julio 2025">
+        <div class="overlay-text">Haz clic para ver la Playlist</div>
+    </div>
+    <p style="margin-top: 20px; font-size: 0.9em; color: #666;">Descubre los temas más sonados del momento.</p>
+</section>
+
+<div id="top10ModalStandalone" class="modal-standalone">
+    <div class="modal-content-standalone">
+        <span class="close-button-standalone" id="closeTop10Modal">×</span>
+        <h3>Top 10 Musical: ¡Playlist Exclusiva!</h3>
+        <div class="youtube-playlist-container-standalone"></div>
+        <p style="font-size: 0.9em; color: #666; text-align: center;">La playlist se actualizará automáticamente con los últimos éxitos.</p>
     </div>
 </div>
 
-<div class="container" id="admin-panel" style="display:none;">
-    <h1 class="text-center mb-4">Panel de Administración de EstacionKuSTV</h1>
-    <p class="text-right"><button class="btn btn-secondary" id="logout-btn">Cerrar Sesión</button></p>
-
-    <div class="card p-4">
-        <h2>Programación</h2>
-        <form id="program-form">
-            <div class="form-group">
-                <label for="program-day">Día</label>
-                <select class="form-control" id="program-day">
-                    <option value="Lunes">Lunes</option>
-                    <option value="Martes">Martes</option>
-                    <option value="Miercoles">Miércoles</option>
-                    <option value="Jueves">Jueves</option>
-                    <option value="Viernes">Viernes</option>
-                    <option value="Sabado">Sábado</option>
-                    <option value="Domingo">Domingo</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="program-title">Título</label>
-                <input type="text" class="form-control" id="program-title" required>
-            </div>
-            <div class="form-group">
-                <label for="program-time">Horario</label>
-                <input type="text" class="form-control" id="program-time" placeholder="Ej: 08:00 AM - 09:00 AM" required>
-            </div>
-            <div class="form-group">
-                <label for="program-description">Descripción</label>
-                <textarea class="form-control" id="program-description" rows="3" required></textarea>
-            </div>
-            <div class="form-group">
-                <label for="program-image">URL de la Imagen</label>
-                <input type="url" class="form-control" id="program-image" required>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Agregar Programa</button>
-        </form>
-        <hr>
-        <ul id="program-list" class="list-group"></ul>
+<section class="slideshow-container-standalone">
+    <h2>Programación de EstacionKuSTV</h2>
+    <div class="day-selector-standalone">
+        <button class="day-button-standalone" data-day="Lunes">Lunes</button>
+        <button class="day-button-standalone" data-day="Martes">Martes</button>
+        <button class="day-button-standalone" data-day="Miercoles">Miércoles</button>
+        <button class="day-button-standalone" data-day="Jueves">Jueves</button>
+        <button class="day-button-standalone" data-day="Viernes">Viernes</button>
+        <button class="day-button-standalone" data-day="Sabado">Sábado</button>
+        <button class="day-button-standalone" data-day="Domingo">Domingo</button>
+        <button class="day-button-standalone active" data-day="Todos">Todos</button>
     </div>
+    <div class="slides-standalone"></div>
+    <a class="prev-standalone" onclick="plusSlidesStandalone(-1)">❮</a>
+    <a class="next-standalone" onclick="plusSlidesStandalone(1)">❯</a>
+    <div class="dot-container-standalone"></div>
+</section>
 
-    <div class="card p-4">
-        <h2>Top 10 Musical</h2>
-        <form id="top10-form">
-            <div class="form-group">
-                <label for="top10-image">URL de la Imagen del Top 10</label>
-                <input type="url" class="form-control" id="top10-image" required>
-            </div>
-            <div class="form-group">
-                <label for="top10-playlist-id">ID de la Playlist de YouTube</label>
-                <input type="text" class="form-control" id="top10-playlist-id" placeholder="Ej: PL0Tz1eP0c26D6-r_t2r7x-9J3b2r_7K9o" required>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Actualizar Top 10</button>
-        </form>
-    </div>
-
-    <div class="card p-4">
-        <h2>Gestión de Encuestas</h2>
-        <form id="poll-form">
-            <div class="form-group">
-                <label for="poll-question">Pregunta de la Encuesta</label>
-                <input type="text" class="form-control" id="poll-question" required>
-            </div>
-            <div class="form-group">
-                <label>Opciones (separadas por coma)</label>
-                <input type="text" class="form-control" id="poll-options" placeholder="Opción A, Opción B, Opción C" required>
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Crear Nueva Encuesta</button>
-        </form>
-        <hr>
-        <h3>Encuesta Actual</h3>
-        <div id="current-poll-display">Cargando encuesta...</div>
-        <button class="btn btn-danger btn-sm mt-3" id="reset-poll-btn">Resetear Encuesta</button>
-    </div>
-
-    <div class="card p-4">
-        <h2>Mensajes en Vivo</h2>
-        <form id="live-message-form">
-            <div class="form-group">
-                <label for="live-message">Escribe un mensaje para la audiencia:</label>
-                <input type="text" class="form-control" id="live-message" placeholder="Ej: ¡Pronto regresamos con más música!">
-            </div>
-            <button type="submit" class="btn btn-primary mt-3">Enviar Mensaje</button>
-        </form>
-    </div>
-
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
 <script>
-    // ** 1. IMPORTANTE: PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE **
-    // Ve a la consola de Firebase > Configuración del proyecto > Tus apps > Web
-    const firebaseConfig = {
-        apiKey: "TU_API_KEY",
-        authDomain: "TU_AUTH_DOMAIN",
-        projectId: "TU_PROJECT_ID",
-        storageBucket: "TU_STORAGE_BUCKET",
-        messagingSenderId: "TU_MESSAGING_SENDER_ID",
-        appId: "TU_APP_ID"
+    const videoStandalone = document.getElementById('myVideoStandalone');
+    const videoErrorMessageStandalone = document.getElementById('video-error-message-standalone');
+    let hlsStandalone = null;
+
+    const streamUrls = {
+        option1: 'https://micanal.ovh/livestreams/374.X5NYLHNX4RKX.m3u8',
+        option2: 'https://live20.bozztv.com/akamaissh101/ssh101/ekusmedios/playlist.m3u8',
+        option3: 'http://20.84.152.56:5080/LiveApp/streams/c7BPlV9KczjqiYXi156226952109.m3u8'
     };
 
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    // ** 2. IMPORTANTE: DEFINE AQUÍ TU CONTRASEÑA SECRETA **
-    const ADMIN_PASSWORD = "TU_CONTRASEÑA_SECRETA_AQUI"; 
-
-    // Referencias a elementos del DOM
-    const loginSection = document.getElementById('login-section');
-    const adminPanel = document.getElementById('admin-panel');
-    const loginBtn = document.getElementById('login-btn');
-    const logoutBtn = document.getElementById('logout-btn');
-    const adminPasswordInput = document.getElementById('admin-password');
-    const loginStatus = document.getElementById('login-status');
-    const programForm = document.getElementById('program-form');
-    const programList = document.getElementById('program-list');
-    const top10Form = document.getElementById('top10-form');
-    const pollForm = document.getElementById('poll-form');
-    const currentPollDisplay = document.getElementById('current-poll-display');
-    const resetPollBtn = document.getElementById('reset-poll-btn');
-    const liveMessageForm = document.getElementById('live-message-form');
-
-    let isAuthenticated = false;
-
-    // --- Funciones de Autenticación ---
-    loginBtn.addEventListener('click', () => {
-        if (adminPasswordInput.value === ADMIN_PASSWORD) {
-            isAuthenticated = true;
-            loginSection.style.display = 'none';
-            adminPanel.style.display = 'block';
-            loadPrograms();
-            loadCurrentPoll();
-            loginStatus.innerHTML = '';
-        } else {
-            loginStatus.innerHTML = '<div class="alert alert-danger">Contraseña incorrecta.</div>';
-        }
-    });
-
-    logoutBtn.addEventListener('click', () => {
-        isAuthenticated = false;
-        loginSection.style.display = 'block';
-        adminPanel.style.display = 'none';
-        adminPasswordInput.value = '';
-    });
-
-    // --- Funciones de Programación ---
-    programForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const newProgram = {
-            day: document.getElementById('program-day').value,
-            title: document.getElementById('program-title').value,
-            time: document.getElementById('program-time').value,
-            description: document.getElementById('program-description').value,
-            image: document.getElementById('program-image').value
-        };
-        db.collection('programacion').add(newProgram).then(() => {
-            alert('Programa agregado con éxito.');
-            programForm.reset();
-            loadPrograms(); // Recarga la lista para ver el nuevo programa
-        }).catch(error => {
-            console.error("Error al agregar programa: ", error);
-        });
-    });
-
-    function loadPrograms() {
-        programList.innerHTML = '';
-        db.collection('programacion').orderBy('day').get().then(snapshot => {
-            snapshot.forEach(doc => {
-                const program = doc.data();
-                const li = document.createElement('li');
-                li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                li.innerHTML = `
-                    <div>
-                        <strong>${program.day} - ${program.title}</strong><br>
-                        <small>${program.time}</small>
-                    </div>
-                    <button class="btn btn-danger btn-sm" onclick="deleteProgram('${doc.id}')">Eliminar</button>
-                `;
-                programList.appendChild(li);
-            });
-        });
+    function displayVideoErrorStandalone(message) {
+        videoStandalone.style.display = 'none';
+        videoErrorMessageStandalone.textContent = message;
+        videoErrorMessageStandalone.style.display = 'block';
     }
 
-    function deleteProgram(id) {
-        if (confirm('¿Estás seguro de que quieres eliminar este programa?')) {
-            db.collection('programacion').doc(id).delete().then(() => {
-                alert('Programa eliminado.');
-                loadPrograms();
-            }).catch(error => {
-                console.error("Error al eliminar programa: ", error);
-            });
+    function loadVideoSourceStandalone(url) {
+        if (hlsStandalone) {
+            hlsStandalone.destroy();
         }
-    }
+        videoStandalone.removeAttribute('src');
 
-    // --- Funciones de Top 10 Musical ---
-    top10Form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const top10Data = {
-            image: document.getElementById('top10-image').value,
-            playlistId: document.getElementById('top10-playlist-id').value
-        };
-        db.collection('top10').doc('config').set(top10Data).then(() => {
-            alert('Top 10 actualizado.');
-        }).catch(error => {
-            console.error("Error al actualizar Top 10: ", error);
-        });
-    });
-
-    // --- Funciones de Encuestas ---
-    pollForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const question = document.getElementById('poll-question').value;
-        const optionsText = document.getElementById('poll-options').value;
-        const optionsArray = optionsText.split(',').map(item => item.trim());
-        
-        const newPoll = {
-            question: question,
-            options: optionsArray,
-            votes: optionsArray.map(() => 0)
-        };
-        db.collection('encuestas').doc('currentPoll').set(newPoll).then(() => {
-            alert('Nueva encuesta creada.');
-            loadCurrentPoll();
-            pollForm.reset();
-        }).catch(error => {
-            console.error("Error al crear encuesta: ", error);
-        });
-    });
-
-    function loadCurrentPoll() {
-        db.collection('encuestas').doc('currentPoll').get().then(doc => {
-            if (doc.exists) {
-                const poll = doc.data();
-                let resultsHtml = `<h4>${poll.question}</h4>`;
-                poll.options.forEach((option, index) => {
-                    resultsHtml += `<p>${option}: ${poll.votes[index]} votos</p>`;
+        if (Hls.isSupported()) {
+            console.log("HLS.js es soportado por este navegador.");
+            hlsStandalone = new Hls();
+            hlsStandalone.loadSource(url);
+            hlsStandalone.attachMedia(videoStandalone);
+            hlsStandalone.on(Hls.Events.MANIFEST_PARSED, function() {
+                console.log("Manifiesto HLS parseado. Intentando reproducir.");
+                videoStandalone.play().catch(e => {
+                    console.warn("Autoplay bloqueado:", e);
                 });
-                currentPollDisplay.innerHTML = resultsHtml;
-            } else {
-                currentPollDisplay.innerHTML = '<p>No hay una encuesta activa.</p>';
+            });
+            hlsStandalone.on(Hls.Events.ERROR, function(event, data) {
+                console.error('HLS Error Event:', event, 'Data:', data);
+                if (data.fatal) {
+                    let errorMessage = "Error fatal al cargar el video. ";
+                    switch (data.type) {
+                        case Hls.ErrorTypes.NETWORK_ERROR:
+                            errorMessage += "Problema de red o CORS. Código: " + data.details;
+                            console.error('NETWORK_ERROR:', data);
+                            if (data.details !== Hls.ErrorDetails.MANIFEST_LOAD_ERROR || data.response.code !== 404 || data.response.code !== 403) {
+                                console.log('Intentando recuperar el error de red...');
+                                hlsStandalone.startLoad();
+                            } else {
+                                displayVideoErrorStandalone('No se pudo cargar el stream. Posible URL inválida o problema de servidor (CORS).');
+                            }
+                            break;
+                        case Hls.ErrorTypes.MEDIA_ERROR:
+                            errorMessage += "Error de medios. El formato del video podría no ser compatible o estar corrupto. Código: " + data.details;
+                            console.error('MEDIA_ERROR:', data);
+                            console.log('Intentando recuperar el error de medios...');
+                            hlsStandalone.recoverMediaError();
+                            break;
+                        default:
+                            errorMessage += "Error desconocido.";
+                            console.error('UNKNOWN FATAL ERROR:', data);
+                            hlsStandalone.destroy();
+                            displayVideoErrorStandalone('Ocurrió un error inesperado. El video no se puede reproducir.');
+                            break;
+                    }
+                    if (data.type !== Hls.ErrorTypes.NETWORK_ERROR || (data.type === Hls.ErrorTypes.NETWORK_ERROR && (data.response.code === 404 || data.response.code === 403))) {
+                        displayVideoErrorStandalone(errorMessage + " Por favor, verifica la URL del stream o la configuración del servidor.");
+                    }
+                } else {
+                    console.warn('HLS Non-fatal Error:', data);
+                }
+            });
+        } else if (videoStandalone.canPlayType('application/vnd.apple.mpegurl')) {
+            console.log("El navegador soporta HLS nativamente (ej. Safari).");
+            videoStandalone.src = url;
+            videoStandalone.addEventListener('loadedmetadata', function() {
+                console.log("Metadatos del video cargados. Intentando reproducir.");
+                videoStandalone.play().catch(e => {
+                    console.warn("Autoplay bloqueado:", e);
+                });
+            });
+            videoStandalone.addEventListener('error', function(e) {
+                console.error("Error nativo de video:", e);
+                displayVideoErrorStandalone('Error al reproducir el video. El stream podría no ser válido o el navegador no puede manejarlo.');
+            });
+        } else {
+            console.warn('Tu navegador no soporta HLS ni con hls.js ni nativamente.');
+            displayVideoErrorStandalone('Lo sentimos, tu navegador no soporta la reproducción de este video. Intenta con un navegador más moderno como Chrome, Firefox, Edge o Safari.');
+        }
+
+        videoStandalone.style.display = 'block';
+        videoErrorMessageStandalone.style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadVideoSourceStandalone(streamUrls.option1);
+    });
+
+    document.querySelectorAll('.stream-button-standalone').forEach(button => {
+        button.addEventListener('click', () => {
+            const selectedStream = button.dataset.stream;
+            const urlToLoad = streamUrls[selectedStream];
+            document.querySelectorAll('.stream-button-standalone').forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+            loadVideoSourceStandalone(urlToLoad);
+        });
+    });
+
+    let slideIndexStandalone = 0;
+    let slideshowTimeoutStandalone;
+    let currentDayFilterStandalone = 'Todos';
+    const programmingDataStandalone = [
+        {
+            day: "Lunes",
+            title: "Noticias KuSTV - Edición Matutina",
+            time: "08:00 AM - 09:00 AM",
+            description: "Un repaso exhaustivo de las noticias más relevantes del día a nivel local y nacional.",
+            image: "https://images.unsplash.com/photo-1572949646481-92978a3b50c0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwxfHxuZXdzfGVufDB8fHx8MTcwMTk1NzcwMXww&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Lunes",
+            title: "Cocina con Sabor KuS",
+            time: "10:00 AM - 11:00 AM",
+            description: "Recetas fáciles y deliciosas para tu día a día, con ingredientes de temporada.",
+            image: "https://images.pexels.com/photos/3287313/pexels-photo-3287313.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Lunes",
+            title: "Deportes Extremos KuSTV",
+            time: "07:00 PM - 08:00 PM",
+            description: "Adrenalina pura con lo mejor del deporte extremo, entrevistas y análisis.",
+            image: "https://images.unsplash.com/photo-1543884890-50d4f19941a7?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHw1fHxlbHRyZW1lJTIwc3BvcnRzfGVufDB8fHx8MTcwMTk1NzgyOXww&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Martes",
+            title: "Misterios Urbanos",
+            time: "09:00 AM - 10:00 AM",
+            description: "Explorando leyendas y fenómenos inexplicables de nuestra ciudad y el mundo.",
+            image: "https://images.pexels.com/photos/10326442/pexels-photo-10326442.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Martes",
+            title: "Salud y Bienestar",
+            time: "01:00 PM - 02:00 PM",
+            description: "Consejos de expertos para una vida sana: nutrición, ejercicio y salud mental.",
+            image: "https://images.unsplash.com/photo-1532938911079-cdfd0ec51705?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHxoZWFsdGh8ZW5mDB8fHx8MTcwMTk1Nzg0N3ww&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Martes",
+            title: "Cine Clásico KuSTV",
+            time: "09:00 PM - 11:00 PM",
+            description: "Disfruta de las joyas del séptimo arte que marcaron una época.",
+            image: "https://images.pexels.com/photos/33129/popcorn-movie-party-cinema.jpg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Miercoles",
+            title: "Tecnología al Día",
+            time: "11:00 AM - 12:00 PM",
+            description: "Las últimas novedades en gadgets, software y el impacto de la tecnología en nuestras vidas.",
+            image: "https://images.unsplash.com/photo-1518770660439-46740671c435?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHx0ZWNobm9sb2d5fGVufDB8fHx8MTcwMTk1Nzg2OHww&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Miercoles",
+            title: "Historia de Nuestra Región",
+            time: "03:00 PM - 04:00 PM",
+            description: "Un viaje al pasado para conocer los eventos y personajes que forjaron nuestra identidad.",
+            image: "https://images.pexels.com/photos/1572979/pexels-photo-1572979.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Miercoles",
+            title: "KuS Talentos",
+            time: "08:00 PM - 09:00 PM",
+            description: "Descubre los talentos emergentes en música, arte y comedia local.",
+            image: "https://images.unsplash.com/photo-1510511232891-4f1078e36780?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHxtdXNpY3xlbnwwfHx8fDE3MDE5NTc4ODd8MA&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Jueves",
+            title: "Finanzas Personales",
+            time: "09:00 AM - 10:00 AM",
+            description: "Consejos prácticos para manejar tu dinero, invertir y planificar tu futuro.",
+            image: "https://images.pexels.com/photos/6863264/pexels-photo-6863264.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Jueves",
+            title: "Viajes y Aventuras",
+            time: "02:00 PM - 03:00 PM",
+            description: "Explora destinos increíbles, consejos de viaje y experiencias únicas alrededor del mundo.",
+            image: "https://images.unsplash.com/photo-1501785888041-af3ba6f06fd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwxNXx8dHJhdmVsfGVufDB8fHx8MTcwMTk1NzkwMnww&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Jueves",
+            title: "Debate Político KuSTV",
+            time: "08:00 PM - 09:00 PM",
+            description: "Análisis y discusión sobre los temas políticos más relevantes con expertos y ciudadanos.",
+            image: "https://images.pexels.com/photos/6646849/pexels-photo-6646849.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Viernes",
+            title: "Cultura Pop Hoy",
+            time: "10:00 AM - 11:00 AM",
+            description: "Lo último en música, cine, series, videojuegos y tendencias que definen la cultura actual.",
+            image: "https://images.unsplash.com/photo-1585647347963-c54d3727397e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwyfHxwG9wJTIwY3VsdHVyZXxlbnwwfHx8fDE3MDE5NTc5NDZ8MA&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Viernes",
+            title: "Especial KuSTV del Fin de Semana",
+            time: "06:00 PM - 07:00 PM",
+            description: "Un adelanto de los eventos, conciertos y actividades para disfrutar el fin de semana.",
+            image: "https://images.pexels.com/photos/347141/pexels-photo-347141.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Viernes",
+            title: "Noche de Comedia KuS",
+            time: "09:00 PM - 10:00 PM",
+            description: "Risas garantizadas con los mejores comediantes y sketches originales.",
+            image: "https://images.unsplash.com/photo-1549208077-ade58a2d3345?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwzfHxzY29tZWR5fGVufDB8fHx8MTcwMTk1ODA0NHww&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Sabado",
+            title: "Sábados de Película Infantil",
+            time: "10:00 AM - 12:00 PM",
+            description: "Las mejores películas para los más pequeños de la casa.",
+            image: "https://images.pexels.com/photos/1010515/pexels-photo-1010515.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Sabado",
+            title: "Documentales KuSTV",
+            time: "05:00 PM - 06:00 PM",
+            description: "Explora el mundo con nuestros documentales de ciencia, naturaleza e historia.",
+            image: "https://images.unsplash.com/photo-1518708688-66223405788f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwxMHx8ZG9jdW1lbnRhcnl8ZW5mDB8fHx8MTcwMTk1ODA0NHww&ixlib=rb-4.0.3&q=80&w=400"
+        },
+        {
+            day: "Domingo",
+            title: "Música sin Límites",
+            time: "02:00 PM - 04:00 PM",
+            description: "Lo mejor de todos los géneros musicales, conciertos y entrevistas.",
+            image: "https://images.pexels.com/photos/1105666/pexels-photo-1105666.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1"
+        },
+        {
+            day: "Domingo",
+            title: "Series Imperdibles",
+            time: "08:00 PM - 10:00 PM",
+            description: "Maratones y estrenos de las series que están dando de qué hablar.",
+            image: "https://images.unsplash.com/photo-1574267432658-0062d64f0270?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w1ODc3Mjl8MHwxfHNlYXJjaHwzfHxzZXJpZXN8ZW5mDB8fHx8MTcwMTk1ODA3NHww&ixlib=rb-4.0.3&q=80&w=400"
+        }
+    ];
+
+    function renderSlidesStandalone(filterDay) {
+        const slidesContainer = document.querySelector('.slides-standalone');
+        const dotContainer = document.querySelector('.dot-container-standalone');
+        slidesContainer.innerHTML = '';
+        dotContainer.innerHTML = '';
+        const filteredData = filterDay === 'Todos' ?
+            programmingDataStandalone :
+            programmingDataStandalone.filter(program => program.day === filterDay);
+
+        if (filteredData.length === 0) {
+            slidesContainer.innerHTML = '<div class="mySlides-standalone" style="display: block;"><p>No hay programas disponibles para este día.</p></div>';
+            return;
+        }
+
+        filteredData.forEach((program, index) => {
+            const slide = document.createElement('div');
+            slide.classList.add('mySlides-standalone');
+            slide.style.display = 'none';
+            slide.innerHTML = `
+                <img src="${program.image}" alt="${program.title}">
+                <h3>${program.title}</h3>
+                <p><strong>Día:</strong> ${program.day}</p>
+                <p><strong>Hora:</strong> ${program.time}</p>
+                <p>${program.description}</p>
+            `;
+            slidesContainer.appendChild(slide);
+
+            const dot = document.createElement('span');
+            dot.classList.add('dot-standalone');
+            dot.onclick = () => currentSlideStandalone(index + 1);
+            dotContainer.appendChild(dot);
+        });
+
+        slideIndexStandalone = 0;
+        showSlidesStandalone(slideIndexStandalone);
+    }
+
+    function showSlidesStandalone(n) {
+        const slides = document.querySelectorAll('.mySlides-standalone');
+        const dots = document.querySelectorAll('.dot-standalone');
+
+        if (slides.length === 0) return;
+        if (n >= slides.length) {
+            slideIndexStandalone = 0;
+        }
+        if (n < 0) {
+            slideIndexStandalone = slides.length - 1;
+        }
+
+        slides.forEach(slide => slide.style.display = 'none');
+        dots.forEach(dot => dot.classList.remove('active-dot-standalone'));
+        slides[slideIndexStandalone].style.display = 'block';
+
+        if (dots[slideIndexStandalone]) {
+            dots[slideIndexStandalone].classList.add('active-dot-standalone');
+        }
+
+        const slidesContainer = document.querySelector('.slides-standalone');
+        slidesContainer.style.transform = `translateX(-${slideIndexStandalone * 100}%)`;
+
+        clearTimeout(slideshowTimeoutStandalone);
+        slideshowTimeoutStandalone = setTimeout(() => plusSlidesStandalone(1), 5000);
+    }
+
+    function plusSlidesStandalone(n) {
+        showSlidesStandalone(slideIndexStandalone += n);
+    }
+
+    function currentSlideStandalone(n) {
+        showSlidesStandalone(slideIndexStandalone = n - 1);
+    }
+
+    function setDayFilterStandalone(day) {
+        currentDayFilterStandalone = day;
+        const dayButtons = document.querySelectorAll('.day-button-standalone');
+        dayButtons.forEach(button => {
+            button.classList.remove('active');
+            if (button.dataset.day === day) {
+                button.classList.add('active');
             }
         });
+        renderSlidesStandalone(currentDayFilterStandalone);
     }
 
-    resetPollBtn.addEventListener('click', () => {
-        if (confirm('¿Estás seguro de que quieres resetear la encuesta actual?')) {
-            db.collection('encuestas').doc('currentPoll').delete().then(() => {
-                alert('Encuesta reseteada.');
-                loadCurrentPoll();
-            }).catch(error => {
-                console.error("Error al resetear la encuesta: ", error);
-            });
-        }
-    });
-
-    // --- Funciones de Mensajes en Vivo ---
-    liveMessageForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const message = document.getElementById('live-message').value;
-        db.collection('mensajes').doc('liveMessage').set({ text: message, timestamp: firebase.firestore.FieldValue.serverTimestamp() }).then(() => {
-            alert('Mensaje en vivo enviado.');
-            liveMessageForm.reset();
-        }).catch(error => {
-            console.error("Error al enviar mensaje: ", error);
+    document.querySelectorAll('.day-button-standalone').forEach(button => {
+        button.addEventListener('click', () => {
+            const day = button.dataset.day;
+            setDayFilterStandalone(day);
         });
     });
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setDayFilterStandalone('Todos');
+    });
+
+    const top10ModalStandalone = document.getElementById('top10ModalStandalone');
+    const openTop10ModalButtonStandalone = document.getElementById('openTop10Modal');
+    const closeTop10ModalButtonStandalone = document.getElementById('closeTop10Modal');
+    const youtubePlaylistContainerStandalone = document.querySelector('.youtube-playlist-container-standalone');
+    const playlistId = 'PL0Tz1eP0c26D6-r_t2r7x-9J3b2r_7K9o';
+
+    openTop10ModalButtonStandalone.onclick = function() {
+        top10ModalStandalone.style.display = 'flex';
+        if (!youtubePlaylistContainerStandalone.querySelector('iframe')) {
+            const iframe = document.createElement('iframe');
+            iframe.src = `https://www.youtube.com/embed/videoseries?list=${playlistId}`;
+            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+            iframe.allowFullscreen = true;
+            youtubePlaylistContainerStandalone.appendChild(iframe);
+        }
+    }
+
+    closeTop10ModalButtonStandalone.onclick = function() {
+        top10ModalStandalone.style.display = 'none';
+        const iframe = youtubePlaylistContainerStandalone.querySelector('iframe');
+        if (iframe) {
+            iframe.src = iframe.src;
+        }
+    }
+
+    window.onclick = function(event) {
+        if (event.target == top10ModalStandalone) {
+            top10ModalStandalone.style.display = 'none';
+            const iframe = youtubePlaylistContainerStandalone.querySelector('iframe');
+            if (iframe) {
+                iframe.src = iframe.src;
+            }
+        }
+    }
 </script>
-</body>
-</html>
